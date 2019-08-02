@@ -11,11 +11,23 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui ximgproc imgcodecs)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories("../libplyxx/libplyxx")
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+
 set(HEADERS
+    src/ply.hpp
+    src/sift.hpp
+    src/surf.hpp
+    src/lk.hpp
+    src/kanatani.hpp
     src/klt.hpp
 )
 
 set(SOURCES
+    src/sift.cpp
+    src/surf.cpp
+    src/lk.cpp
+    src/kanatani.cpp
     src/klt.cpp
     src/main.cpp
 )
