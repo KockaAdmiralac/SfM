@@ -5,6 +5,8 @@
 #include "opencv2/highgui.hpp"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "opencv2/features2d.hpp"
+#include "opencv2/xfeatures2d.hpp"
 
 #include "klt.hpp"
 #include "kanatani.hpp"
@@ -13,7 +15,7 @@
 
 using namespace std;
 using namespace cv;
-
+using namespace cv::xfeatures2d;
 
 int main() {    
     Mat imageLeft;
@@ -72,6 +74,47 @@ int main() {
                 break;
             }
         }
+
+    int minHessian = 400;
+    Ptr<SURF> detector = SURF::create( minHessian );
+    std::vector<KeyPoint> keypoints1, keypoints2;
+    Mat descriptors1, descriptors2;
+    detector->detectAndCompute( imageLeft, noArray(), keypoints1, descriptors1 );
+    detector->detectAndCompute( imageRight, noArray(), keypoints2, descriptors2 );
+
+    //-- Step 2: Matching descriptor vectors with a FLANN based matcher
+    // Since SURF is a floating-point descriptor NORM_L2 is used
+    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+    std::vector< std::vector<DMatch> > knn_matches;
+    matcher->knnMatch( descriptors1, descriptors2, knn_matches, 2 );
+
+    //-- Filter matches using the Lowe's ratio test
+    const float ratio_thresh = 0.7f;
+    std::vector<DMatch> good_matches;
+    for (size_t i = 0; i < 20; i++) //knn_matches.size()
+    {
+        if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
+        {
+            good_matches.push_back(knn_matches[i][0]);
+        }
+    }
+
+    //-- Draw matches
+    Mat img_matches;
+    drawMatches( imageLeft, keypoints1, imageRight, keypoints2, good_matches, img_matches, Scalar::all(-1),
+                 Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+    //-- Show detected matches
+    imshow("Good Matches", img_matches );
+
+    waitKey();
+
+        
+        
+        //-- Show detected (drawn) keypoints
+        //imshow("Keypoints 1", img_keypoints_1 );
+        //imshow("Keypoints 2", img_keypoints_2 );
+
         //SIFT(image);
 
         //namedWindow("Display window", WINDOW_AUTOSIZE);
