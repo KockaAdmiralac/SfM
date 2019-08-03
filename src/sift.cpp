@@ -135,8 +135,6 @@ void SIFT(Mat original)
     {
         for(int j = 0; j<2 ; j++)
         {
-            
-            
             keyPointMaps[i][j] = findKeyPoints(DoG[i][j],DoG[i][j+1],DoG[i][j+2]);
             
             string str = "TEMP/keyPointMaps/";

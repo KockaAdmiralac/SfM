@@ -16,28 +16,50 @@ using namespace cv;
 
 
 int main() {    
-    Mat image;
-    string path = "../data_SfM/PiazzaBraNewCropped/"; //path to dataset from current location
+    Mat imageLeft;
+    Mat imageRight;
+    string pathLeft = "../kitti/stereoData/00/image_0/"; //path to dataset from current location
+    string pathRight = "../kitti/stereoData/00/image_1/";
     int i = 0;
-    string full_path;
-
+    string full_path_left,full_path_right;
+    string extra_path;
     //the main loop
     while(1) //loop while there are pictures example name: PiazzaBra - 000007.JPG
     {
         // loop through images:
         i++;
 
-        full_path = path;
-        full_path.append(to_string(i));
-        full_path.append(".JPG");
+        if(i<10)            extra_path = "00000";
+        else if(i<100)      extra_path = "0000";
+        else if(i<1000)     extra_path = "000";
+        else if(i<10000)    extra_path = "00";
+        else if(i<100000)   extra_path = "0";
+        else                extra_path = "";
+
+        extra_path.append(to_string(i));
+
+        full_path_left = pathLeft;
+        full_path_left.append(extra_path);
+        full_path_left.append(".png");
+
+        full_path_right = pathRight;
+        full_path_right.append(extra_path);
+        full_path_right.append(".png");
         
         //cout <<"opening " << full_path << endl; 
         try
         {
-            image = imread(full_path, IMREAD_COLOR);
-            if(! image.data)
+            imageLeft = imread(full_path_left, IMREAD_COLOR); //already grayscale?
+            if(! imageLeft.data)
             {
-                cout <<"error loading: " << full_path << "\n";
+                cout << "error loading: " << full_path_left << "\n";
+                throw -1;
+            }
+
+            imageRight = imread(full_path_right, IMREAD_GRAYSCALE);
+            if(! imageRight.data)
+            {
+                cout << "error loading: " << full_path_right << "\n";
                 throw -1;
             }
         }
@@ -50,11 +72,8 @@ int main() {
                 break;
             }
         }
+        //SIFT(image);
 
-
-        SIFT(image);
-
-        return 0;
         //namedWindow("Display window", WINDOW_AUTOSIZE);
         //imshow("Display window", image);
         //waitKey(0);
