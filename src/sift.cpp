@@ -18,37 +18,46 @@ Mat downsample(Mat image)
 
 Mat findKeyPoints(Mat x, Mat y, Mat z)
 {
-    Mat result = x;
-
+    Mat result(y.cols,y.rows,0);
+    bool flag;
     for(int i=0 ; i < result.rows ; i++)
     {   
         for(int j=0 ; j < result.cols ; j++)
         {
-            if((i == 0 || j == 0) || (i == result.rows-1 || j == result.cols-1))
-                result.at<double>(i,j) = 0;
+            if(i == 0 || j == 0 || i == result.rows-1 || j == result.cols-1){
+                result.at<uint8_t>(i,j) = 0;
+                continue;
+            }
 
-            else
+            uint8_t temp = y.at<uint8_t>(i,j);
+            flag = true;
+            /* 
+            for(int p = -1; p<=1;p++)
             {
-                double temp = y.at<double>(i,j);
-                bool flag = true;
-                for(int p = -1; p<=1;p++)
+                /out <<" | ";
+                for(int q = -1; q<= 1; q++)
                 {
-                    for(int q = -1; q<= 1; q++)
+                    cout << unsigned(x.at<uint8_t>(i+p,j+q))<<", ";
+                }
+                cout <<" | " << endl;
+            }
+            */
+
+            for(int p = -1; p<=1;p++)
+            {
+                for(int q = -1; q<= 1; q++)
+                {
+                    if(p == 0 && q == 0) continue;
+                    if((x.at<uint8_t>(i+p,j+q) >= temp) || (z.at<uint8_t>(i+p,j+q) >= temp) || (y.at<uint8_t>(i+p,j+q) >= temp))
                     {
-                        if(
-                            (x.at<double>(i+p,j+q) > temp) ||
-                            (z.at<double>(i+p,j+q) > temp) ||
-                            (y.at<double>(i+p,j+q) > temp) 
-                            )
-                            {
-                                result.at<double>(i,j) = 0;
-                                flag = false;
-                            }
+                        result.at<uint8_t>(i,j) = 0;
+                        flag = false;
                     }
                 }
-                if(flag)
-                    result.at<double>(i,j) =255.0;
-
+            }
+            if(flag)
+            {
+                result.at<uint8_t>(i,j) =255;
             }
 
         }
@@ -83,7 +92,7 @@ void SIFT(Mat original)
 
         for(int j =1; j<blur_levels; j++)
         {
-            current_sigma = sigma0 * pow(2.0,i+double(j)/blur_levels); // according to comment on [1].
+            current_sigma = sigma0 * pow(2.0,i+uint8_t(j)/blur_levels); // according to comment on [1].
             printf("sigma for picture ScaleSpace[%d][%d] is %f\n",i,j,current_sigma);
             ScaleSpace[i][j] = gaussianBlur(ScaleSpace[i][j-1],5,current_sigma);
         }
@@ -102,7 +111,7 @@ void SIFT(Mat original)
     }
     //LoG approximation:
 
-    Mat DoG[octaves-1][blur_levels-1];
+    Mat DoG[octaves][blur_levels-1];
     
     for(int i =0;i<octaves;i++)
     {
@@ -112,7 +121,7 @@ void SIFT(Mat original)
             string str = "TEMP/DoGTemp/";
             str.append(to_string(i));
             str.append(to_string(j));
-            str.append(".JPG");
+            str.append(".PNG");
             imwrite(str,DoG[i][j]);
         }
     }
@@ -120,24 +129,22 @@ void SIFT(Mat original)
 
     //Finding local minima and maxima:
 
-    Mat keyPointMaps[octaves-1][blur_levels-3];
+    Mat keyPointMaps[octaves][blur_levels];
     
-    for(int i=0; i<octaves-1; i++)
+    for(int i=0; i<octaves; i++)
     {
         for(int j = 0; j<2 ; j++)
         {
-            cout <<"iznad " << endl;
-            cout << i << " , " << j << " "<<endl;
+            
+            
             keyPointMaps[i][j] = findKeyPoints(DoG[i][j],DoG[i][j+1],DoG[i][j+2]);
-            cout <<"success\n";
+            
             string str = "TEMP/keyPointMaps/";
             str.append(to_string(i));
             str.append(to_string(j));
-            str.append(".JPG");
+            str.append(".PNG");
             imwrite(str,keyPointMaps[i][j]);
-            cout <<" end" << endl;
         }
-        cout <<"ispod" <<endl;
     }
 
 }
