@@ -4,9 +4,8 @@ Project(SfM)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB LIBPLYXX_SOURCES "../libplyxx/libplyxx/*.cpp")
-
 find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui ximgproc imgcodecs)
+find_library(libplyxx NAMES "../libplyxx/liblibplyxx.a")
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories("../libplyxx/libplyxx")
@@ -19,21 +18,20 @@ set(HEADERS
     src/sift.hpp
     src/surf.hpp
     src/lk.hpp
-    src/kanatani.hpp
     src/klt.hpp
+    src/kanatani.hpp
+    src/icp.hpp
 )
 
 set(SOURCES
+    src/ply.cpp
     src/sift.cpp
     src/surf.cpp
     src/lk.cpp
-    src/kanatani.cpp
     src/klt.cpp
+    src/kanatani.cpp
+    src/icp.cpp
     src/main.cpp
-)
-
-add_library(libplyxx
-    "../libplyxx/libplyxx/libplyxx.cpp"
 )
 
 add_executable(SfM

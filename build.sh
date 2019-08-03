@@ -1,7 +1,6 @@
 #!/bin/sh
-rm -rf CMakeFiles
-rm CMakeCache.txt
-rm SfM
-rm Makefile
-cmake .
+set -e
+cd `dirname $0`
+./clean.sh
+cmake -DCMAKE_BUILD_TYPE=Debug .
 make
