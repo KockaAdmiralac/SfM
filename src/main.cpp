@@ -7,6 +7,9 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "klt.hpp"
+#include "kanatani.hpp"
+#include "sift.hpp"
+#include "surf.hpp"
 
 using namespace std;
 using namespace cv;
@@ -56,10 +59,18 @@ int main() {
         }
         //namedWindow("Display window", WINDOW_AUTOSIZE);
         //imshow("Display window", image);
+        //waitKey(0);
+        
 
 
         //TODO:
-            //SIFT
+            //SIFT --------
+                    //test:
+                    //Mat temp = downsample(image);
+                    //namedWindow("2",WINDOW_AUTOSIZE);
+                    //imshow("2",downsample(temp));
+                    //waitKey(0);
+
                 //KANADE-LUKAS
                     //kantani triangulation
                         //bundle adj.
