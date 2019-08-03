@@ -5,3 +5,4 @@ Makefile
 SfM
 CMakeCache.txt
 liblibplyxx.a
+*.JPG

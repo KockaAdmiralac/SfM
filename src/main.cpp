@@ -17,10 +17,8 @@ using namespace cv;
 
 int main() {    
     Mat image;
-    string path = "../data_SfM/PiazzaBraNew/PiazzaBra - "; //path to dataset from current location
+    string path = "../data_SfM/PiazzaBraNewCropped/"; //path to dataset from current location
     int i = 0;
-    int count = 1;
-    string extra_path;
     string full_path;
 
     //the main loop
@@ -28,16 +26,12 @@ int main() {
     {
         // loop through images:
         i++;
-        if(i<10)        extra_path = "00000"; 
-        else if(i<100)  extra_path = "0000";
-        else if(i<1000) extra_path = "000";
-        extra_path.append(to_string(i));
-        
+
         full_path = path;
-        full_path.append(extra_path);
+        full_path.append(to_string(i));
         full_path.append(".JPG");
         
-        cout <<"opening " << full_path << endl; 
+        //cout <<"opening " << full_path << endl; 
         try
         {
             image = imread(full_path, IMREAD_COLOR);
@@ -56,7 +50,47 @@ int main() {
                 break;
             }
         }
-        Rect roi;
+
+
+        SIFT(image);
+
+        return 0;
+        //namedWindow("Display window", WINDOW_AUTOSIZE);
+        //imshow("Display window", image);
+        //waitKey(0);
+        
+
+
+        //TODO:
+            //SIFT --------
+                    //test:
+                    //Mat temp = downsample(image);
+                    //namedWindow("2",WINDOW_AUTOSIZE);
+                    //imshow("2",downsample(temp));
+                    //waitKey(0);
+
+                //KANADE-LUKAS
+                    //kantani triangulation
+                        //bundle adj.
+
+            //SURF
+                //KANADE-LUKAS
+                    //kantani triangulation
+                        //bundle adj.
+
+            //KLT
+                //katani triangulation
+                    //bundle adj.
+
+    }
+
+    return 0;
+}
+
+
+/*
+code used for cropping:   
+Rect roi;
         if(image.cols == 3008 && image.rows == 2000) {//vertikalno
             roi.x = 4;
             roi.y = 0;
@@ -108,34 +142,4 @@ int main() {
             imwrite(str,cropped2);
             count++;
         }
-        //namedWindow("Display window", WINDOW_AUTOSIZE);
-        //imshow("Display window", image);
-        //waitKey(0);
-        
-
-
-        //TODO:
-            //SIFT --------
-                    //test:
-                    //Mat temp = downsample(image);
-                    //namedWindow("2",WINDOW_AUTOSIZE);
-                    //imshow("2",downsample(temp));
-                    //waitKey(0);
-
-                //KANADE-LUKAS
-                    //kantani triangulation
-                        //bundle adj.
-
-            //SURF
-                //KANADE-LUKAS
-                    //kantani triangulation
-                        //bundle adj.
-
-            //KLT
-                //katani triangulation
-                    //bundle adj.
-
-    }
-
-    return 0;
-}
+*/
