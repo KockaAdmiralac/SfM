@@ -91,24 +91,30 @@ int main() {
     //-- Filter matches using the Lowe's ratio test
     const float ratio_thresh = 0.7f;
     std::vector<DMatch> good_matches;
-    for (size_t i = 0; i < 20; i++) //knn_matches.size()
+    cout <<"there are total of " << knn_matches.size() << " matches ";
+    for (size_t i = 0; i < knn_matches.size(); i++) //knn_matches.size()
     {
         if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
         {
             good_matches.push_back(knn_matches[i][0]);
         }
     }
-
+    cout << " and " << good_matches.size() << "good matches \n";
     //-- Draw matches
-    Mat img_matches;
-    drawMatches( imageLeft, keypoints1, imageRight, keypoints2, good_matches, img_matches, Scalar::all(-1),
+    int loops = good_matches.size()/20;
+    for(int i = 1;i < loops;i++ ){
+        Mat img_matches;
+        std::vector<DMatch>::iterator first = good_matches.begin()+20*(i-1);
+        std::vector<DMatch>::iterator last = good_matches.begin()+20*i;
+        std::vector<DMatch> newVec(first,last);
+        drawMatches( imageLeft, keypoints1, imageRight, keypoints2, newVec, img_matches, Scalar::all(-1),
                  Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
     //-- Show detected matches
-    imshow("Good Matches", img_matches );
+        imshow("Good Matches", img_matches );
 
-    waitKey();
-
+        waitKey(); 
+    }
         
         
         //-- Show detected (drawn) keypoints
