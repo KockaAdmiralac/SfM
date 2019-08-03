@@ -15,11 +15,11 @@ using namespace std;
 using namespace cv;
 
 
-int main() {
-    
+int main() {    
     Mat image;
     string path = "../data_SfM/PiazzaBraNew/PiazzaBra - "; //path to dataset from current location
     int i = 0;
+    int count = 1;
     string extra_path;
     string full_path;
 
@@ -27,8 +27,7 @@ int main() {
     while(1) //loop while there are pictures example name: PiazzaBra - 000007.JPG
     {
         // loop through images:
-        i++; 
-
+        i++;
         if(i<10)        extra_path = "00000"; 
         else if(i<100)  extra_path = "0000";
         else if(i<1000) extra_path = "000";
@@ -41,7 +40,7 @@ int main() {
         cout <<"opening " << full_path << endl; 
         try
         {
-            image = imread(full_path, IMREAD_GRAYSCALE);
+            image = imread(full_path, IMREAD_COLOR);
             if(! image.data)
             {
                 cout <<"error loading: " << full_path << "\n";
@@ -56,6 +55,58 @@ int main() {
                 cout <<"breaking out of the main loop.\n";
                 break;
             }
+        }
+        Rect roi;
+        if(image.cols == 3008 && image.rows == 2000) {//vertikalno
+            roi.x = 4;
+            roi.y = 0;
+            roi.width = 2000;
+            roi.height = 2000;
+            Mat cropped1 = image(roi);
+            
+            roi.x = 1004;
+            roi.y = 0;
+            roi.width=2000;
+            roi.height=2000;
+            Mat cropped2 = image(roi);
+            
+            String str = "../data_SfM/PiazzaBraNewCropped/";
+            str.append(to_string(count));
+            str.append(".JPG");
+            imwrite(str,cropped1);
+            count++;
+
+            str = "../data_SfM/PiazzaBraNewCropped/";
+            str.append(to_string(count));
+            str.append(".JPG");
+            imwrite(str,cropped2);
+            count++;
+        }
+
+        else if(image.cols == 2000 && image.rows == 3008){ //horizontalno
+            roi.x = 0;
+            roi.y = 4;
+            roi.width = 2000;
+            roi.height = 2000;
+            Mat cropped1 = image(roi);
+            
+            roi.x = 0;
+            roi.y = 1004;
+            roi.width=2000;
+            roi.height=2000;
+            Mat cropped2 = image(roi);
+            
+            String str = "../data_SfM/PiazzaBraNewCropped/";
+            str.append(to_string(count));
+            str.append(".JPG");
+            imwrite(str,cropped1);
+            count++;
+
+            str = "../data_SfM/PiazzaBraNewCropped/";
+            str.append(to_string(count));
+            str.append(".JPG");
+            imwrite(str,cropped2);
+            count++;
         }
         //namedWindow("Display window", WINDOW_AUTOSIZE);
         //imshow("Display window", image);
