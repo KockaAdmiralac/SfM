@@ -72,25 +72,44 @@ int main() {
     }
     cout << " and " << good_matches.size() << "good matches \n";
     //-- Draw matches
-    int loops = good_matches.size()/20;
-    for(int i = 1;i < loops;i++ )
-    {
+
         Mat img_matches;
-        std::vector<DMatch>::iterator first = good_matches.begin(); //20*(i-1)
-        std::vector<DMatch>::iterator last = good_matches.begin()+i;
-        std::vector<DMatch> newVec(first,last);
-        cout << "features1: " << newVec.at(i-1).queryIdx <<"with pos: " << keypoints1.at(newVec.at(i-1).queryIdx).pt << "\n";
-        cout << "features2: " << newVec.at(i-1).trainIdx <<"with pos: " << keypoints2.at(newVec.at(i-1).queryIdx).pt << "\n";
+
+        //cout << "features1: " << newVec.at(i-1).queryIdx <<"with pos: " << keypoints1.at(newVec.at(i-1).queryIdx).pt << "\n";
+        // cout << "features2: " << newVec.at(i-1).trainIdx <<"with pos: " << keypoints2.at(newVec.at(i-1).queryIdx).pt << "\n";
         
-        cout << "type = " << descriptors1.type() << "\n";
+        //cout << "type = " << descriptors1.type() << "\n";
         
-        drawMatches( imageLeft, keypoints1, imageRight, keypoints2, newVec, img_matches, Scalar::all(-1),
+        drawMatches( imageLeft, keypoints1, imageRight, keypoints2, good_matches, img_matches, Scalar::all(-1),
                  Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
         //-- Show detected matches
         imshow("Good Matches", img_matches );
-        waitKey(); 
-    }
-        
+
+        waitKey(0);
+
+        std::vector<Point2f> newKP1, newKP2;
+
+        KeyPoint temp1;
+        KeyPoint temp2;
+
+        for(cv::DMatch match : good_matches)
+        {
+            temp1 = keypoints1[match.queryIdx];
+            temp2 = keypoints2[match.trainIdx];
+            newKP1.push_back(temp1.pt);
+            newKP2.push_back(temp2.pt);
+        }
+
+        Mat FundamentalMatrix = findFundamentalMat(Mat(newKP1), Mat(newKP2),FM_RANSAC);
+
+        cout <<"Fundamental matrix: "<< FundamentalMatrix<<endl; // printing fundamental matrix
+
+        Mat K0 = seq.calib[0];
+        Mat K1 = seq.calib[1];
+
+
+
+        waitKey(0);
         
         //-- Show detected (drawn) keypoints
         //imshow("Keypoints 1", img_keypoints_1 );
