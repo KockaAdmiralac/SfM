@@ -10,9 +10,12 @@ cv::Mat readMatrix(std::string line) {
     std::stringstream lineStream(line);
     std::string element;
     int index = 0;
-    cv::Mat result(3, 4, CV_8U);
+    cv::Mat result(3, 4, CV_64F);
     while (std::getline(lineStream, element, ' ')) {
-        result.at<uint8_t>(index % 4, index / 4) = stod(element);
+        printf("%s ", element);
+        printf("%f %d %d %lu...", stod(element), index % 4, index / 4, sizeof(double));
+        result.at<double>(index % 4, index / 4) = stod(element);
+        printf("done\n");
         index++;
     }
     return result;
