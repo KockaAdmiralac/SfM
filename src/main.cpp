@@ -14,6 +14,7 @@
 #include "kanatani.hpp"
 #include "sift.hpp"
 #include "surf.hpp"
+#include "kitti.hpp"
 
 using namespace std;
 using namespace cv;
@@ -22,50 +23,18 @@ using namespace cv::xfeatures2d;
 int main() {    
     Mat imageLeft;
     Mat imageRight;
-    string pathLeft = "../kitti/stereoData/00/image_0/"; //path to dataset from current location
-    string pathRight = "../kitti/stereoData/00/image_1/";
+    Sequence seq(0);
     int i = 0;
-    string full_path_left,full_path_right;
-    string extra_path;
     //the main loop
-    while(1) //loop while there are pictures example name: PiazzaBra - 000007.JPG
+    while(1)
     {
         // loop through images:
         i++;
-
-        if(i<10)            extra_path = "00000";
-        else if(i<100)      extra_path = "0000";
-        else if(i<1000)     extra_path = "000";
-        else if(i<10000)    extra_path = "00";
-        else if(i<100000)   extra_path = "0";
-        else                extra_path = "";
-
-        extra_path.append(to_string(i));
-
-        full_path_left = pathLeft;
-        full_path_left.append(extra_path);
-        full_path_left.append(".png");
-
-        full_path_right = pathRight;
-        full_path_right.append(extra_path);
-        full_path_right.append(".png");
         
-        //cout <<"opening " << full_path << endl; 
         try
         {
-            imageLeft = imread(full_path_left, IMREAD_COLOR); //already grayscale?
-            if(! imageLeft.data)
-            {
-                cout << "error loading: " << full_path_left << "\n";
-                throw -1;
-            }
-
-            imageRight = imread(full_path_right, IMREAD_GRAYSCALE);
-            if(! imageRight.data)
-            {
-                cout << "error loading: " << full_path_right << "\n";
-                throw -1;
-            }
+            imageLeft = seq.image(0, i);
+            imageRight = seq.image(1, i);
         }
 
         catch(int n)
