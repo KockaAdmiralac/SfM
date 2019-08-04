@@ -110,8 +110,8 @@ int main() {
         std::vector<DMatch>::iterator first = good_matches.begin(); //20*(i-1)
         std::vector<DMatch>::iterator last = good_matches.begin()+i;
         std::vector<DMatch> newVec(first,last);
-        cout << "features1: " << newVec.at(i-1).queryIdx <<"with pos: " << descriptors1.at<_Float32>(newVec.at(i-1).queryIdx) << "\n";
-        cout << "features2: " << newVec.at(i-1).trainIdx <<"with pos: " << descriptors2.at<_Float32>(newVec.at(i-1).queryIdx) << "\n";
+        cout << "features1: " << newVec.at(i-1).queryIdx <<"with pos: " << keypoints1.at(newVec.at(i-1).queryIdx).pt << "\n";
+        cout << "features2: " << newVec.at(i-1).trainIdx <<"with pos: " << keypoints2.at(newVec.at(i-1).queryIdx).pt << "\n";
         
         cout << "type = " << descriptors1.type() << "\n";
         
