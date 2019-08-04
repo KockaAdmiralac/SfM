@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 set(HEADERS
+    src/kitti.hpp
     src/ply.hpp
     src/sift.hpp
     src/surf.hpp
@@ -24,6 +25,7 @@ set(HEADERS
 )
 
 set(SOURCES
+    src/kitti.cpp
     src/ply.cpp
     src/sift.cpp
     src/surf.cpp

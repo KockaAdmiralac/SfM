@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "command": "sh",
+    "type": "shell",
+    "args": [
+        "-c"
+    ],
+    "label": "all",
+    "tasks": [
+        {
+            "label": "clean",
+            "command": "./clean.sh"
+        },
+        {
+            "label": "cmake",
+            "command": "cmake",
+            "args": [
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "."
+            ]
+        },
+        {
+            "label": "make",
+            "command": "make",
+            "args": [
+                "-j4"
+            ]
+        },
+        {
+            "label": "build",
+            "dependsOn": [
+                "clean",
+                "cmake",
+                "make"
+            ],
+            "dependsOrder": "sequence"
+        }
+    ]
+}
