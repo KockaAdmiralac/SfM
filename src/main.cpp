@@ -91,51 +91,22 @@ int main() {
 
         KeyPoint temp1;
         KeyPoint temp2;
+        int N = good_matches.size();
+        Mat pnts3D(1,N,CV_64FC4);
 
         for(cv::DMatch match : good_matches)
         {
             temp1 = keypoints1[match.queryIdx];
             temp2 = keypoints2[match.trainIdx];
+
+
             newKP1.push_back(temp1.pt);
             newKP2.push_back(temp2.pt);
         }
 
-        Mat FundamentalMatrix = findFundamentalMat(Mat(newKP1), Mat(newKP2),FM_RANSAC);
-
-        cout <<"Fundamental matrix:\n"<< FundamentalMatrix<<endl; // printing fundamental matrix
-
-        Mat K0 = seq.calib[0];
-        Mat K1 = seq.calib[1];
-
-        cout <<"Camera matrix:\n" << K0 << endl;
-        cout <<"Camera matrix2:\n" << K1 << endl;
-
-        Mat E0 = K0.t() * FundamentalMatrix * K0;
-        Mat E1 = K1.t() * FundamentalMatrix * K1;
-
-        SVD svd;
-
-        OutputArray W0,U0,Vt0,W1,U1,Vt1;
-        svd.compute(E0,W0,U0,Vt0,SVD::FULL_UV);
-        svd.compute(E1,W1,U1,Vt1,SVD::FULL_UV);
-
-
-        Mat W(3,3,CV_8U);
-        W.at<uint8_t>(0,0) = 0;
-        W.at<uint8_t>(0,1) = -1;
-        W.at<uint8_t>(0,2) = 0;
-
-        W.at<uint8_t>(0,0) = 1;
-        W.at<uint8_t>(1,1) = 0;
-        W.at<uint8_t>(1,2) = 0;
         
-        W.at<uint8_t>(0,0) = 0;
-        W.at<uint8_t>(2,1) = 0;
-        W.at<uint8_t>(2,2) = 1;
-        
-        Mat R1 = U1 * W.inv() * Vt1;
-
-
+        triangulatePoints(seq.calib[0], seq.calib[1], newKP1, newKP2, pnts3D);
+        cout << pnts3D << endl;
         waitKey(0);
         
         //-- Show detected (drawn) keypoints
