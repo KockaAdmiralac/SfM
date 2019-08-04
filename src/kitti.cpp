@@ -7,16 +7,19 @@
 #include <kitti.hpp>
 
 cv::Mat readMatrix(std::string line) {
-    printf("start\n");
-    std::stringstream lineStream(line);
+    std::istringstream lineStream(line);
     std::string element;
     int index = 0;
-    cv::Mat result = *new cv::Mat(3, 4, CV_64F);
-    while (std::getline(lineStream, element, ' ')) {
-        result.at<double>(index % 4, index / 4) = stod(element);
+    cv::Mat result(3, 4, CV_64F);
+    do {
+        std::string element;
+        lineStream >> element;
+        if (element.size() == 0) {
+            break;
+        }
+        result.at<double>(index / 4, index % 4) = stod(element);
         index++;
-    }
-    printf("done\n");
+    } while(lineStream);
     return result;
 }
 
@@ -39,7 +42,7 @@ Sequence::Sequence(int number) : number(number) {
         }
     }
     while (std::getline(posesFile, line)) {
-                poses.push_back(readMatrix(line));
+        poses.push_back(readMatrix(line));
     }
     while (std::getline(timesFile, line)) {
         times.push_back(stod(line));

@@ -7,20 +7,20 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/features2d.hpp"
 #include "opencv2/xfeatures2d.hpp"
-//#include <opencv2/sfm.hpp>
+#include <opencv2/sfm.hpp>
 #include <opencv2/viz.hpp>
 
-#include "klt.hpp"
-#include "kanatani.hpp"
-#include "sift.hpp"
-#include "surf.hpp"
+//#include "klt.hpp"
+//#include "kanatani.hpp"
+//#include "sift.hpp"
+//#include "surf.hpp"
 #include "kitti.hpp"
 
 using namespace std;
 using namespace cv;
 using namespace cv::xfeatures2d;
 
-int main() {    
+int main() {
     Mat imageLeft;
     Mat imageRight;
     Sequence seq(0);
@@ -36,7 +36,6 @@ int main() {
             imageLeft = seq.image(0, i);
             imageRight = seq.image(1, i);
         }
-
         catch(int n)
         {
             if(n == -1)
@@ -143,7 +142,6 @@ int main() {
                     //bundle adj.
 
     }
-
     return 0;
 }
 

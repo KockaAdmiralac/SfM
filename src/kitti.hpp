@@ -1,3 +1,5 @@
+#ifndef _KITTI_H
+#define _KITTI_H
 #include <opencv2/core/core.hpp>
 
 #include <iterator>
@@ -11,3 +13,4 @@ struct Sequence {
     Sequence(int number);
     cv::Mat image(int image, int sequence);
 };
+#endif
