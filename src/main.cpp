@@ -15,6 +15,7 @@
 //#include "sift.hpp"
 //#include "surf.hpp"
 #include "kitti.hpp"
+#include "ply.hpp"
 
 using namespace std;
 using namespace cv;
@@ -122,23 +123,26 @@ int main() {
        // waitKey();
         //-- Show detected matches /
 
-        std::vector<Point2f> newKP0, newKP1, newKP2, newKP3;
+        int N0 = good_matches0.size();
+        int N1 = good_matches1.size();
+        cv::Mat newKP0(1, N0, CV_64FC2),
+                newKP1(1, N0, CV_64FC2),
+                newKP2(1, N1, CV_64FC2),
+                newKP3(1, N1, CV_64FC2);
 
         KeyPoint temp0;
         KeyPoint temp1;
         KeyPoint temp2;
         KeyPoint temp3;
 
-        int N0 = good_matches0.size();
-        int N1 = good_matches1.size();
         
         Mat pnts3D0(1,N0,CV_64FC4);
-        Mat pnts3D1(1,N0,CV_64FC4);
+        Mat pnts3D1(1,N1,CV_64FC4);
 
-        DMatch hashArray0[keypoints0.size()];
-        DMatch hashArray1[keypoints2.size()];
+        DMatch hashArray0[10000];
+        DMatch hashArray1[10000];
 
-
+        int iiiiii = 0;
         for(cv::DMatch match : good_matches0)
         {
             ////cout <<"trying to put (" << match.queryIdx << " " << match.trainIdx << ",distance) at position " << match.queryIdx << " out of total " << keypoints0.size() << " places " << endl;
@@ -148,8 +152,10 @@ int main() {
             hashArray0[match.queryIdx].imgIdx = match.imgIdx;
             hashArray0[match.queryIdx].queryIdx = match.queryIdx;
             hashArray0[match.queryIdx].trainIdx = match.trainIdx;
-
+            newKP0.at<Point2d>(iiiiii) = keypoints0[match.queryIdx].pt;
+            newKP1.at<Point2d>(iiiiii) = keypoints1[match.trainIdx].pt;
             //printf("\nat hashArray0[%d]:\n queryIdx: %d \n trainIdx: %d \n imgIdx: %d \n distance: %f \n",match.queryIdx, match.queryIdx,match.trainIdx,match.imgIdx,match.distance);
+            iiiiii++;
         }
         //printf("successfully ended fist generation of hash Array");
 
@@ -196,9 +202,6 @@ int main() {
                 tempMatch0.imgIdx = hashArray0[match.queryIdx].imgIdx;
                 tempMatch0.queryIdx = hashArray0[match.queryIdx].queryIdx;
                 tempMatch0.trainIdx = hashArray0[match.queryIdx].trainIdx;
-
-                newKP0.push_back(keypoints0[match.queryIdx].pt);
-                newKP1.push_back(keypoints1[match.trainIdx].pt);
                 finalMatches0.push_back(tempMatch0);
             }
             if (hashArray1[match.trainIdx].queryIdx != -1 && hashArray1[match.trainIdx].trainIdx != -1) {
@@ -206,16 +209,48 @@ int main() {
                 tempMatch1.imgIdx = hashArray1[match.trainIdx].imgIdx;
                 tempMatch1.queryIdx = hashArray1[match.trainIdx].queryIdx;
                 tempMatch1.trainIdx = hashArray1[match.trainIdx].trainIdx;
-
-                newKP2.push_back(keypoints2[match.queryIdx].pt);
-                newKP3.push_back(keypoints3[match.trainIdx].pt);
                 finalMatches1.push_back(tempMatch1);
-
             }
         }
 
+        cout << newKP0.at<Point2f>(0) <<endl;
         triangulatePoints(seq.calib[0], seq.calib[1], newKP0, newKP1, pnts3D0);
-        triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
+        //triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
+        for (int i = 0; i < 10; ++i) {
+            cout <<     pnts3D0.at<Vec4d>(i)    <<endl;
+        }
+        
+        cout <<     newKP0.at<Point2d>(0)   <<endl;
+
+        namedWindow("test");
+        namedWindow("test2");
+        for (int i = 0; i < 1; ++i) {
+            circle(imageLeft0, newKP0.at<Point2d>(i), 43, Scalar(0, 0, 255), 1);
+            circle(imageRight0, newKP1.at<Point2d>(i), 43, Scalar(0,0,255), 1);            
+            imshow("test",imageLeft0);
+            imshow("test2",imageRight0);
+            waitKey(0);
+        }
+        VertexList vertices0,vertices1;
+
+        for(int i=0;i<pnts3D0.cols;++i)
+        {
+            Vec4f pnt = pnts3D0.at<Vec4f>(i);
+            double div = pnt[3];
+            printf("%.9f %.9f %.9f %.9f\n", pnt[0], pnt[1], pnt[2], pnt[3]);
+            Vertex v(pnt[0] / div, pnt[1] / div, pnt[2] / div);
+            vertices0.push_back(v);
+        }
+        writeply("ply0.ply",vertices0);
+
+        for(int i=0;i<pnts3D1.cols;++i)
+        {
+            Vec4f pnt = pnts3D1.at<Vec4f>(i);
+            double div = pnt[3];
+            Vertex v(pnt[0]/div, pnt[1]/div, pnt[2]/div);
+            vertices1.push_back(v);
+        }
+        writeply("ply1.ply",vertices1);
 
         Mat image_matches_refined0;
         Mat image_matches_refined1;
