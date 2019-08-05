@@ -11,10 +11,9 @@ bool operator ==(const Vertex& a, const Vertex& b) {
 
 void readply(PATH_STRING filename, VertexList& vertices) {
 	libply::File file(filename);
-	const auto& definitions = file.definitions();
+	const libply::ElementsDefinition& definitions = file.definitions();
 
-	const auto vertexDefinition = definitions.at(0);
-	const size_t vertexCount = vertexDefinition.size;
+	const size_t vertexCount = definitions.at(0).size;
 	vertices.reserve(vertexCount);
 	libply::ElementReadCallback vertexCallback = [&vertices](libply::ElementBuffer& e) {
 		vertices.emplace_back(e[0], e[1], e[2]);
@@ -22,4 +21,24 @@ void readply(PATH_STRING filename, VertexList& vertices) {
 
 	file.setElementReadCallback("vertex", vertexCallback);
 	file.read();
+}
+
+void writeply(PATH_STRING filename, VertexList& vertices) {
+	libply::FileOut file(filename, libply::File::Format::BINARY_LITTLE_ENDIAN);
+	file.setElementsDefinition({
+		libply::Element("vertex", vertices.size(), {
+			libply::Property("x", libply::Type::FLOAT, false),
+			libply::Property("y", libply::Type::FLOAT, false),
+			libply::Property("z", libply::Type::FLOAT, false)
+		})
+	});
+
+	libply::ElementWriteCallback vertexCallback = [&vertices](libply::ElementBuffer& e, size_t index) {
+		const Vertex& v = vertices[index];
+		e[0] = v.x;
+		e[1] = v.y;
+		e[2] = v.z;
+	};
+	file.setElementWriteCallback("vertex", vertexCallback);
+	file.write();
 }

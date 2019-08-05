@@ -15,3 +15,4 @@ struct Mesh {
 };
 
 void readply(PATH_STRING filename, VertexList& vertices);
+void writeply(PATH_STRING filename, VertexList& vertices);
