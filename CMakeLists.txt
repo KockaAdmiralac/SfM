@@ -4,7 +4,7 @@ Project(SfM)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui ximgproc imgcodecs features2d xfeatures2d sfm)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui ximgproc imgcodecs features2d xfeatures2d)
 find_library(libplyxx NAMES "../libplyxx/liblibplyxx.a")
 
 include_directories(${OpenCV_INCLUDE_DIRS})
