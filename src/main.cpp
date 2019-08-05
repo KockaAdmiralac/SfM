@@ -122,13 +122,7 @@ int main() {
         
        // waitKey();
         //-- Show detected matches /
-
-        int N0 = good_matches0.size();
-        int N1 = good_matches1.size();
-        cv::Mat newKP0(1, N0, CV_64FC2),
-                newKP1(1, N0, CV_64FC2),
-                newKP2(1, N1, CV_64FC2),
-                newKP3(1, N1, CV_64FC2);
+        std::vector<cv::Point2d> newKP0, newKP1, newKP2, newKP3;
 
         KeyPoint temp0;
         KeyPoint temp1;
@@ -136,28 +130,22 @@ int main() {
         KeyPoint temp3;
 
         
-        Mat pnts3D0(1,N0,CV_64FC4);
-        Mat pnts3D1(1,N1,CV_64FC4);
+        Mat pnts3D0;
+        Mat pnts3D1;
 
         DMatch hashArray0[10000];
         DMatch hashArray1[10000];
 
-        int iiiiii = 0;
         for(cv::DMatch match : good_matches0)
         {
-            ////cout <<"trying to put (" << match.queryIdx << " " << match.trainIdx << ",distance) at position " << match.queryIdx << " out of total " << keypoints0.size() << " places " << endl;
-            
             //DMatch nema preklopljen operator:
             hashArray0[match.queryIdx].distance =  match.distance;  //at every pair of key0 we put key1
             hashArray0[match.queryIdx].imgIdx = match.imgIdx;
             hashArray0[match.queryIdx].queryIdx = match.queryIdx;
             hashArray0[match.queryIdx].trainIdx = match.trainIdx;
-            newKP0.at<Point2d>(iiiiii) = keypoints0[match.queryIdx].pt;
-            newKP1.at<Point2d>(iiiiii) = keypoints1[match.trainIdx].pt;
-            //printf("\nat hashArray0[%d]:\n queryIdx: %d \n trainIdx: %d \n imgIdx: %d \n distance: %f \n",match.queryIdx, match.queryIdx,match.trainIdx,match.imgIdx,match.distance);
-            iiiiii++;
+            newKP0.push_back(keypoints0[match.queryIdx].pt);
+            newKP1.push_back(keypoints1[match.trainIdx].pt);
         }
-        //printf("successfully ended fist generation of hash Array");
 
         for(cv::DMatch match : good_matches1)
         {
@@ -165,8 +153,9 @@ int main() {
             hashArray1[match.queryIdx].imgIdx = match.imgIdx;
             hashArray1[match.queryIdx].queryIdx = match.queryIdx;
             hashArray1[match.queryIdx].trainIdx = match.trainIdx;
+            newKP2.push_back(keypoints2[match.queryIdx].pt);
+            newKP3.push_back(keypoints3[match.trainIdx].pt);
         }
-        //printf("successfully ended second heneration of hash Array\n");
 
         
         //between frames matching:
@@ -213,50 +202,24 @@ int main() {
             }
         }
 
-        for (int i = 0; i < 3; ++i) {
-            cout << newKP0.at<Point2d>(i) <<endl;
-            cout << newKP1.at<Point2d>(i) <<endl;
-        }
-        triangulatePoints(seq.calib[0], seq.calib[1], std::vector<Point2d>{
-            Point2d(439.051, 166.853),
-            Point2d(810.549, 61.0923)
-        }, std::vector<Point2d>{
-            Point2d(433.144, 166.455),
-            Point2d(784.683, 60.4384)
-        }, pnts3D0);
-        //triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
-        for (int i = 0; i < 2; ++i) {
-            cout <<     pnts3D0.at<Vec4d>(i)    <<endl;
-        }
-        
-        cout <<     newKP0.at<Point2d>(0)   <<endl;
-
-        namedWindow("test");
-        namedWindow("test2");
-        for (int i = 0; i < 1; ++i) {
-            circle(imageLeft0, newKP0.at<Point2d>(i), 43, Scalar(0, 0, 255), 1);
-            circle(imageRight0, newKP1.at<Point2d>(i), 43, Scalar(0,0,255), 1);            
-            imshow("test",imageLeft0);
-            imshow("test2",imageRight0);
-            waitKey(0);
-        }
-        VertexList vertices0,vertices1;
-
-        for(int i=0;i<pnts3D0.cols;++i)
-        {
-            Vec4d pnt = pnts3D0.at<Vec4d>(i);
-            double div = pnt[3];
-            printf("%.9f %.9f %.9f %.9f\n", pnt[0], pnt[1], pnt[2], pnt[3]);
-            Vertex v(pnt[0] / div, pnt[1] / div, pnt[2] / div);
+        triangulatePoints(seq.calib[0], seq.calib[1], newKP0, newKP1, pnts3D0);
+        triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
+        VertexList vertices0, vertices1;
+        for (int i = 0; i < pnts3D0.cols; ++i) {
+            cv::Mat p3d;
+            cv::Mat _p3h = pnts3D0.col(i);
+            convertPointsFromHomogeneous(_p3h.t(), p3d);
+            cout << p3d << endl;
+            Vertex v(p3d.at<double>(0), p3d.at<double>(1), p3d.at<double>(2));
             vertices0.push_back(v);
         }
         writeply("ply0.ply",vertices0);
-
-        for(int i=0;i<pnts3D1.cols;++i)
-        {
-            Vec4f pnt = pnts3D1.at<Vec4f>(i);
-            double div = pnt[3];
-            Vertex v(pnt[0]/div, pnt[1]/div, pnt[2]/div);
+        for (int i = 0; i < pnts3D1.cols; ++i) {
+            cv::Mat p3d;
+            cv::Mat _p3h = pnts3D1.col(i);
+            convertPointsFromHomogeneous(_p3h.t(), p3d);
+            cout << p3d << endl;
+            Vertex v(p3d.at<double>(0), p3d.at<double>(1), p3d.at<double>(2));
             vertices1.push_back(v);
         }
         writeply("ply1.ply",vertices1);
