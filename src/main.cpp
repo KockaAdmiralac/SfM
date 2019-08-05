@@ -213,10 +213,19 @@ int main() {
             }
         }
 
-        cout << newKP0.at<Point2f>(0) <<endl;
-        triangulatePoints(seq.calib[0], seq.calib[1], newKP0, newKP1, pnts3D0);
+        for (int i = 0; i < 3; ++i) {
+            cout << newKP0.at<Point2d>(i) <<endl;
+            cout << newKP1.at<Point2d>(i) <<endl;
+        }
+        triangulatePoints(seq.calib[0], seq.calib[1], std::vector<Point2d>{
+            Point2d(439.051, 166.853),
+            Point2d(810.549, 61.0923)
+        }, std::vector<Point2d>{
+            Point2d(433.144, 166.455),
+            Point2d(784.683, 60.4384)
+        }, pnts3D0);
         //triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 2; ++i) {
             cout <<     pnts3D0.at<Vec4d>(i)    <<endl;
         }
         
@@ -235,7 +244,7 @@ int main() {
 
         for(int i=0;i<pnts3D0.cols;++i)
         {
-            Vec4f pnt = pnts3D0.at<Vec4f>(i);
+            Vec4d pnt = pnts3D0.at<Vec4d>(i);
             double div = pnt[3];
             printf("%.9f %.9f %.9f %.9f\n", pnt[0], pnt[1], pnt[2], pnt[3]);
             Vertex v(pnt[0] / div, pnt[1] / div, pnt[2] / div);
