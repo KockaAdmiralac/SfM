@@ -6,4 +6,5 @@ SfM
 CMakeCache.txt
 liblibplyxx.a
 *.JPG
+*.ply
 TEMP
