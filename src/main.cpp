@@ -7,6 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/features2d.hpp"
 #include "opencv2/xfeatures2d.hpp"
+#include <opencv2/calib3d.hpp>
 //#include <opencv2/sfm.hpp>
 //#include <opencv2/viz.hpp>
 
