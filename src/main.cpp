@@ -29,26 +29,10 @@ std::vector<cv::DMatch> extractMatches(cv::Ptr<cv::DescriptorMatcher> matcher, c
     {
         if (knnMatches[0].distance < RATIO_THRESH * knnMatches[1].distance)
         {
-            matches.push_back(knnMatches[2]);
+            matches.push_back(knnMatches[0]);
         }
     }
     return matches;
-}
-
-/**
- * Adds matches from a list to a hash array.
- * @param map
- * @param matches
- */
-void mapMatches(cv::DMatch* map, std::vector<cv::DMatch> matches)
-{
-    for (cv::DMatch match : matches)
-    {
-        map[match.queryIdx].distance = match.distance;
-        map[match.queryIdx].imgIdx   = match.imgIdx;
-        map[match.queryIdx].queryIdx = match.queryIdx;
-        map[match.queryIdx].trainIdx = match.trainIdx;
-    }
 }
 
 /**
@@ -77,9 +61,14 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector<cv::DMatch> matchesLeft = extractMatches(matcher, descriptors0, descriptors2);
 
     // 3. FEATURE MATCH PROCESSING
-    std::vector<cv::Point2d> sharedKeypoints0, sharedKeypoints1, sharedKeypoints2;
     cv::DMatch hashArrayUp[MAX_MATCHES];
-    mapMatches(hashArrayUp, matchesUp);
+    for (cv::DMatch match : matchesUp)
+    {
+        hashArrayUp[match.queryIdx].distance = match.distance;
+        hashArrayUp[match.queryIdx].imgIdx   = match.imgIdx;
+        hashArrayUp[match.queryIdx].queryIdx = match.queryIdx;
+        hashArrayUp[match.queryIdx].trainIdx = match.trainIdx;
+    }
 
     // 4. DETERMINING COMMON MATCHES
     std::vector <cv::Point2d> sharedKeypoints0, sharedKeypoints1, sharedKeypoints2;
