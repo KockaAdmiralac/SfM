@@ -37,7 +37,6 @@ int main() {
         
         try
         {   
-            printf("%d\n",i);
             imageLeft0 = seq.image(0, i).clone();
             imageRight0 = seq.image(1, i).clone();
             imageLeft1 = seq.image(0, i+1).clone();
@@ -206,11 +205,16 @@ int main() {
         triangulatePoints(seq.calib[0], seq.calib[1], newKP0, newKP1, pnts3D0);
         triangulatePoints(seq.calib[0], seq.calib[1], newKP2, newKP3, pnts3D1);
         VertexList vertices0, vertices1;
+        std::vector<Point3d> objectPoints; 
         for (int i = 0; i < pnts3D0.cols; ++i) {
             cv::Mat p3d;
             cv::Mat _p3h = pnts3D0.col(i);
             convertPointsFromHomogeneous(_p3h.t(), p3d);
-            cout << p3d << endl;
+            //cout << p3d << endl;
+
+            Point3d tempPoint(p3d.at<double>(0), p3d.at<double>(1), p3d.at<double>(2));
+            objectPoints.push_back(tempPoint);
+            
             Vertex v(p3d.at<double>(0), p3d.at<double>(1), p3d.at<double>(2));
             vertices0.push_back(v);
         }
@@ -219,7 +223,7 @@ int main() {
             cv::Mat p3d;
             cv::Mat _p3h = pnts3D1.col(i);
             convertPointsFromHomogeneous(_p3h.t(), p3d);
-            cout << p3d << endl;
+            //cout << p3d << endl;
             Vertex v(p3d.at<double>(0), p3d.at<double>(1), p3d.at<double>(2));
             vertices1.push_back(v);
         }
@@ -235,6 +239,51 @@ int main() {
                 Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
  
+        //objectPoint done
+        //imagePoints done
+        //cameraMatrix done
+        //rvec, tvec ??
+
+        cv::Mat rvec(3,1,cv::DataType<double>::type);
+        cv::Mat tvec(3,1,cv::DataType<double>::type);
+        cv::Mat distCoeffs(4,1,cv::DataType<double>::type);
+
+
+        //cout << seq.calib[0] << endl;
+        
+
+        cv::Mat cameraMatrix(3,3,CV_64F);
+        
+        cameraMatrix.at<double>(0,0) = seq.calib[0].at<double>(0,0);
+        cameraMatrix.at<double>(0,1) = seq.calib[0].at<double>(0,1);
+        cameraMatrix.at<double>(0,2) = seq.calib[0].at<double>(0,2);
+
+        cameraMatrix.at<double>(1,0) = seq.calib[0].at<double>(1,0);
+        cameraMatrix.at<double>(1,1) = seq.calib[0].at<double>(1,1);
+        cameraMatrix.at<double>(1,2) = seq.calib[0].at<double>(1,2);
+
+        cameraMatrix.at<double>(2,0) = seq.calib[0].at<double>(2,0);
+        cameraMatrix.at<double>(2,1) = seq.calib[0].at<double>(2,1);
+        cameraMatrix.at<double>(2,2) = seq.calib[0].at<double>(2,2);
+
+
+       //cout << cameraMatrix << endl;
+
+
+        if(solvePnP(objectPoints,newKP1,cameraMatrix,distCoeffs,rvec,tvec)) {
+            printf("successfully finished solvePNP()");
+            
+        }
+
+        Mat rotationMat;
+        Rodrigues(rvec,rotationMat);
+        
+        cout << "\n Rotation Matrix: \n" << rotationMat<<endl; 
+        cout << "\n Translation Vector: \n" << tvec << endl;
+
+        //cout << "\n ground truth Matrix: \n" << 
+        /*
+        if you wanna generate the optical flow of the video: 
 
         for (DMatch m : good_matches2) {
             Point2f point_old = keypoints0[m.queryIdx].pt;
@@ -247,13 +296,20 @@ int main() {
             line(imageLeft0, point_old, point_new, Scalar(0, 255, 0), 2, 8, 0);
             line(imageLeft1, point_old, point_new, Scalar(0, 255, 0), 2, 8, 0);
         }
+
+         */
         //namedWindow(std::string("opflo0").append(to_string(i)));
         //imshow(std::string("opflo0").append(to_string(i)),imageLeft0);
         //waitKey(0);
         //destroyWindow(std::string("opflo0").append(to_string(i)));
-        imwrite(std::string("TEMP/opflow/").append(to_string(i)).append(".png"),imageLeft0);
-        imageLeft0.release();
+        //imwrite(std::string("TEMP/opflow/").append(to_string(i)).append(".png"),imageLeft0);
+        //imageLeft0.release();
         
+
+
+
+
+
         //-- Show detected (drawn) keypoints
         //imshow("Keypoints 1", img_keypoints_1 );
         //imshow("Keypoints 2", img_keypoints_2 );
