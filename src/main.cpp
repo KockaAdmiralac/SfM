@@ -14,6 +14,9 @@
 #define RATIO_THRESH 0.7f
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
+// Debug mode (commend it not using)
+
+
 
 /**
  * Matches descriptor vectors with a FLANN based matcher
@@ -43,8 +46,10 @@ std::vector<cv::DMatch> extractMatches(cv::Ptr<cv::DescriptorMatcher> matcher, c
  * @param image1 Right image of the first frame
  * @param image2 Left image of the second frame
  * @param image3 Right image of the second frame
+ * @param Sequence
+ * @param frameNumber
  */
-void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq)
+void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq,int frameNumber, cv::Mat AbsoluteCameraPosition)
 {
     // 1. FEATURE DETECTION using cv::SURF feature extractor
     cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(MIN_HESSIAN);
@@ -112,8 +117,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         //#temp code
 
             //let's see the coordinates of this point:
+            #ifdef DEBUG_MODE            
             std::cout << "\n temp point's coordinates: \n" << tempPoint << std::endl;
-
+            #endif
             cv::Mat Point3D(4, 1, CV_64F);
             Point3D.at<double>(0,0) = tempPoint.x; 
             Point3D.at<double>(1,0) = tempPoint.y;
@@ -133,11 +139,10 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
             convertPointsFromHomogeneous(tempMat.t(), tempMat2);
             
+            #ifdef DEBUG_MODE
             std::cout << " after dividing " << tempMat2 << std::endl; 
-
-
             std::cout << " and should project to \n [" << sharedKeypoints0[i].x << ", " << sharedKeypoints0[i].y << "]" << std::endl;
-
+            #endif
             
         //#temp code_end
         Vertex v(point.at<double>(0), point.at<double>(1), point.at<double>(2));
@@ -163,9 +168,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     translationVector.at<double>(0,0) = 0;
     translationVector.at<double>(1,0) = 0;
     translationVector.at<double>(2,0) = 0;
-    
+    #ifdef DEBUG_MODE
     std::cout << "\n\ndist coefs:\n" << distCoeffs << std::endl;
-
+    #endif
     for(int i=0 ; i<3 ; i++)
     {
         for(int j=0 ; j<3 ; j++)
@@ -246,7 +251,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
             
             cv::convertPointsFromHomogeneous(temp2D.t(), nonHomoPoint);
+            #ifdef DEBUG_MODE
             std::cout <<"fram0: "<< nonHomoPoint << std::endl;
+            #endif
             fakeProj0.push_back(cv::Point2d(nonHomoPoint.at<double>(0),nonHomoPoint.at<double>(1)));
 
             
@@ -254,7 +261,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
             
             cv::convertPointsFromHomogeneous(temp2D.t(), nonHomoPoint);
+            #ifdef DEBUG_MODE
             std::cout << "frame1: "<< nonHomoPoint << std::endl << std::endl;
+            #endif
             fakeProj2.push_back(cv::Point2d(nonHomoPoint.at<double>(0),nonHomoPoint.at<double>(1)));
             
         }
@@ -288,10 +297,13 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
     cv::Mat rotationMatrix;
     Rodrigues(rotationVector, rotationMatrix);
+    
+    #ifdef DEBUG_MODE
     std::cout << "\n Rotation Matrix: \n" << rotationMatrix << std::endl;
     std::cout << "\n Translation Vector: \n" << translationVector << std::endl;
-    std::cout << "\n ground truth Matrix: \n" << seq.poses.at(0) << std::endl;
-
+    std::cout << "\n ground truth Matrix: \n" << seq.poses.at(frameNumber) << std::endl;
+    #endif //DEBUG_MODE
+    
     cv::Mat conc(4,4, CV_64F);
 
     for(int i=0;i<3;i++)
@@ -308,22 +320,48 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     conc.at<double>(3,1) = 0;
     conc.at<double>(3,2) = 0;
     conc.at<double>(3,3) = 1;
+    #ifdef DEBUG_MODE
     std::cout << "CONC: \n" << conc.inv() << std::endl;
-    // 7.
+    #endif
+    AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
+
+    std::cout << "Camera Postion new = \n" << AbsoluteCameraPosition << std::endl;
+
+
+    // 7. Akomuliranje transformacija:
+
+
 }
 
 int main()
 {
     Sequence seq(0);
-    for (int i = 0; i < 4541; ++i)
+    cv::Mat AbsoluteCameraPosition(4,4, CV_64F);
+    for(int i=0 ; i<4 ; i++)
     {
+        for(int j=0; j<4 ;j++)
+        {
+            if(i==j)
+                AbsoluteCameraPosition.at<double>(i, j) = 0;
+            else
+                AbsoluteCameraPosition.at<double>(i, j) = 1;
+        }
+    }
+    
+    for (int i = 0; i < 4541; ++i)
+    {    
         frame(
             seq.image(0, i),
             seq.image(1, i),
             seq.image(0, i + 1),
             seq.image(1, i + 1),
-            seq
-        );       
+            seq,
+            i,
+            AbsoluteCameraPosition
+        );    
+
+
+
     }
     return 0;
 }
