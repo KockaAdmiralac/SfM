@@ -90,7 +90,7 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
             //temp code:
             /*
                 cv::circle(image0, keypoints0[match.queryIdx].pt, 31 , cv::Scalar(150,150,150), 7);
-                cv::circle(image2, keypoints2[match.trainIdx].pt, 31 , cv::Scalar(150,150,150), 7); 
+                cv::circle(image2, keypoints2[match.trainIdx].pt, 31 , cv::Scalar(150,150,150), 7);
                 cv::namedWindow("frame 0");
                 cv::namedWindow("frame 1");
                 cv::imshow("frame 0", image0);
@@ -114,37 +114,6 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         convertPointsFromHomogeneous(triangulatedPointsMat.col(i).t(), point);
         cv::Point3d tempPoint(point.at<double>(0), point.at<double>(1), point.at<double>(2));
         triangulatedPoints.push_back(tempPoint);
-        //#temp code
-
-            //let's see the coordinates of this point:
-            #ifdef DEBUG_MODE            
-            std::cout << "\n temp point's coordinates: \n" << tempPoint << std::endl;
-            #endif
-            cv::Mat Point3D(4, 1, CV_64F);
-            Point3D.at<double>(0,0) = tempPoint.x; 
-            Point3D.at<double>(1,0) = tempPoint.y;
-            Point3D.at<double>(2,0) = tempPoint.z;
-            Point3D.at<double>(3,0) = 1;
-
-            cv::Mat Projection2D = seq.calib[0] * Point3D;
-            /*
-            std::cout << " and those project to \n" << Projection2D << std::endl;
-            std::cout << " and should project to \n [" << sharedKeypoints0[i].x << ", " << sharedKeypoints0[i].y << "]" << std::endl;
-
-            std::cout << " and when projecting values before convertPointsFromHomogeneous(): \n\n" << std::endl;
-            std::cout << " temp point's coordinates: \n" << triangulatedPointsMat.col(i) << std::endl;
-             */
-            cv::Mat tempMat =  seq.calib[0] * triangulatedPointsMat.col(i);
-            cv::Mat tempMat2;
-
-            convertPointsFromHomogeneous(tempMat.t(), tempMat2);
-            
-            #ifdef DEBUG_MODE
-            std::cout << " after dividing " << tempMat2 << std::endl; 
-            std::cout << " and should project to \n [" << sharedKeypoints0[i].x << ", " << sharedKeypoints0[i].y << "]" << std::endl;
-            #endif
-            
-        //#temp code_end
         Vertex v(point.at<double>(0), point.at<double>(1), point.at<double>(2));
         plyVertices.push_back(v);
     }
@@ -153,143 +122,29 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     // 6. Obtaining rotation and translation matrices.
     cv::Mat rotationVector(3, 1, cv::DataType<double>::type);
     cv::Mat translationVector(3, 1, cv::DataType<double>::type);
-    cv::Mat distCoeffs(4, 1, cv::DataType<double>::type);
     cv::Mat cameraMatrix(3, 3, CV_64F);
-    
-    distCoeffs.at<double>(0,0) = 0;
-    distCoeffs.at<double>(1,0) = 0;
-    distCoeffs.at<double>(2,0) = 0;
-    distCoeffs.at<double>(3,0) = 0;
 
     rotationVector.at<double>(0,0) = 0;
     rotationVector.at<double>(1,0) = 0;
     rotationVector.at<double>(2,0) = 0;
-    
+
     translationVector.at<double>(0,0) = 0;
     translationVector.at<double>(1,0) = 0;
     translationVector.at<double>(2,0) = 0;
-    #ifdef DEBUG_MODE
-    std::cout << "\n\ndist coefs:\n" << distCoeffs << std::endl;
-    #endif
-    for(int i=0 ; i<3 ; i++)
+    for (int i = 0; i < 3; ++i)
     {
-        for(int j=0 ; j<3 ; j++)
+        for (int j = 0; j < 3; ++j)
         {
             cameraMatrix.at<double>(i, j) =  seq.calib[0].at<double>(i, j);
         }
     }
-    //temp code:
-        cv::Mat fakePoints(1,20,CV_64FC3);
-        
-            fakePoints.at<cv::Point3d>(0) = cv::Point3d(100, 100, 97);
-            fakePoints.at<cv::Point3d>(1) =  cv::Point3d(200, 69, 200);
-            fakePoints.at<cv::Point3d>(2) =  cv::Point3d(420, 300, 300);
-            fakePoints.at<cv::Point3d>(3) =  cv::Point3d(150, 90, 100);
-            fakePoints.at<cv::Point3d>(4) =  cv::Point3d(190, 70, 200);
-            fakePoints.at<cv::Point3d>(5) =  cv::Point3d(300, 300, 150);
-            fakePoints.at<cv::Point3d>(6) =  cv::Point3d(100, 300, 100);
-            fakePoints.at<cv::Point3d>(7) =  cv::Point3d(100, 200, 100);
-            fakePoints.at<cv::Point3d>(8) =  cv::Point3d(90, 60, 260);
-            fakePoints.at<cv::Point3d>(9) =  cv::Point3d(220, 340, 112);
-            fakePoints.at<cv::Point3d>(10) =  cv::Point3d(20, 210, 125);
-            fakePoints.at<cv::Point3d>(11) =  cv::Point3d(300, 323, 612);
-            fakePoints.at<cv::Point3d>(12) =  cv::Point3d(412, 120, 211);
-            fakePoints.at<cv::Point3d>(13) =  cv::Point3d(162, 52, 771);
-            fakePoints.at<cv::Point3d>(14) =  cv::Point3d(205, 90, 50);
-            fakePoints.at<cv::Point3d>(15) =  cv::Point3d(326, 222, 111);
-            fakePoints.at<cv::Point3d>(16) =  cv::Point3d(102, 333, 90);
-            fakePoints.at<cv::Point3d>(17) =  cv::Point3d(201, 61, 120);
-            fakePoints.at<cv::Point3d>(18) =  cv::Point3d(101, 156, 212);
-            fakePoints.at<cv::Point3d>(19) =  cv::Point3d(200, 74, 561);
-
-
-        cv::Mat fCameraMatrix(3,4, CV_64F), fCameraMatrixCUT(3,3, CV_64F);
-        for(int i = 0; i<3;i++)
-        {
-            for(int j =0;j<4;j++)
-            {
-                if(i==j && i != 2)  fCameraMatrix.at<double>(i,j) = 700;
-                else if( i == j) fCameraMatrix.at<double>(i,j) = 1;
-                else fCameraMatrix.at<double>(i,j) = 0;
-            }
-        }
-
-        std::vector<cv::Point2d> fakeProj0, fakeProj2;
-        cv::Mat temp3D(4,1, CV_64F);
-        cv::Mat temp2D(3,1, CV_64F); //3x1
-        cv::Mat nonHomoPoint;
-        cv::Mat transformationMatrix(4,4,CV_64F);
-
-        transformationMatrix.at<double>(0, 0) = 1;
-        transformationMatrix.at<double>(0, 1) = 0;
-        transformationMatrix.at<double>(0, 2) = 0;
-        transformationMatrix.at<double>(0, 3) = 0;
-        
-        transformationMatrix.at<double>(1, 0) = 0;
-        transformationMatrix.at<double>(1, 1) = 1;
-        transformationMatrix.at<double>(1, 2) = 0;
-        transformationMatrix.at<double>(1, 3) = 0;
-        
-        transformationMatrix.at<double>(2, 0) = 0;
-        transformationMatrix.at<double>(2, 1) = 0;
-        transformationMatrix.at<double>(2, 2) = 1;
-        transformationMatrix.at<double>(2, 3) = 10;
-         
-        transformationMatrix.at<double>(3, 0) = 0;
-        transformationMatrix.at<double>(3, 1) = 0;
-        transformationMatrix.at<double>(3, 2) = 0;
-        transformationMatrix.at<double>(3, 3) = 1;
-
-        for(int i =0; i< 20 ; i ++ )
-        {
-            temp3D.at<double>(0,0) = fakePoints.at<cv::Point3d>(i).x;
-            temp3D.at<double>(1,0) = fakePoints.at<cv::Point3d>(i).y;
-            temp3D.at<double>(2,0) = fakePoints.at<cv::Point3d>(i).z;
-            temp3D.at<double>(3,0) = 1;
-            
-            temp2D = fCameraMatrix * temp3D;
-
-            
-            cv::convertPointsFromHomogeneous(temp2D.t(), nonHomoPoint);
-            #ifdef DEBUG_MODE
-            std::cout <<"fram0: "<< nonHomoPoint << std::endl;
-            #endif
-            fakeProj0.push_back(cv::Point2d(nonHomoPoint.at<double>(0),nonHomoPoint.at<double>(1)));
-
-            
-            temp2D = fCameraMatrix * transformationMatrix * temp3D;
-
-            
-            cv::convertPointsFromHomogeneous(temp2D.t(), nonHomoPoint);
-            #ifdef DEBUG_MODE
-            std::cout << "frame1: "<< nonHomoPoint << std::endl << std::endl;
-            #endif
-            fakeProj2.push_back(cv::Point2d(nonHomoPoint.at<double>(0),nonHomoPoint.at<double>(1)));
-            
-        }
-
-    for(int i=0 ; i<3 ; i++)
-    {
-        for(int j=0 ; j<3 ; j++)
-        {
-            fCameraMatrixCUT.at<double>(i, j) =  fCameraMatrix.at<double>(i, j);
-        }
-    }
-
-    std::vector<double> dumb;
-    /*
-    if (solvePnP(fakePoints,fakeProj2, fCameraMatrixCUT, dumb, rotationVector, translationVector))
-    {
-        printf("Successfully finished fake solvePNP()\n");
-    }
-    */
-    
     cv::Mat butcheredTriangulatedPoints(1, triangulatedPoints.size(), CV_64FC3);
     for (int i = 0; i < triangulatedPoints.size(); ++i)
     {
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
 
+    std::vector<double> dumb;
     if (solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
     {
         printf("Successfully finished solvePNP()\n");
@@ -297,35 +152,43 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
     cv::Mat rotationMatrix;
     Rodrigues(rotationVector, rotationMatrix);
-    
+
     #ifdef DEBUG_MODE
     std::cout << "\n Rotation Matrix: \n" << rotationMatrix << std::endl;
     std::cout << "\n Translation Vector: \n" << translationVector << std::endl;
     std::cout << "\n ground truth Matrix: \n" << seq.poses.at(frameNumber) << std::endl;
     #endif //DEBUG_MODE
-    
+
     cv::Mat conc(4,4, CV_64F);
 
-    for(int i=0;i<3;i++)
+    for (int i = 0; i < 3; ++i)
     {
-        for(int j = 0; j<3;j++)
+        for (int j = 0; j < 3; ++j)
         {
-            conc.at<double>(i,j) = rotationMatrix.at<double>(i,j);
+            conc.at<double>(i, j) = rotationMatrix.at<double>(i, j);
         }
     }
-    conc.at<double>(0,3) = translationVector.at<double>(0, 0);
-    conc.at<double>(1,3) = translationVector.at<double>(1, 0);
-    conc.at<double>(2,3) = translationVector.at<double>(2, 0);
-    conc.at<double>(3,0) = 0;
-    conc.at<double>(3,1) = 0;
-    conc.at<double>(3,2) = 0;
-    conc.at<double>(3,3) = 1;
+    conc.at<double>(0, 3) = translationVector.at<double>(0, 0);
+    conc.at<double>(1, 3) = translationVector.at<double>(1, 0);
+    conc.at<double>(2, 3) = translationVector.at<double>(2, 0);
+    conc.at<double>(3, 0) = 0;
+    conc.at<double>(3, 1) = 0;
+    conc.at<double>(3, 2) = 0;
+    conc.at<double>(3, 3) = 1;
     #ifdef DEBUG_MODE
-    std::cout << "CONC: \n" << conc.inv() << std::endl;
+
+    std::cout << "rotation matrix: \n" << rotationMatrix << std::endl;
+    std::cout << "translation vector: \n " << translationVector << std::endl;
+    std::cout << "CONC: \n" << conc << std::endl;
+    std::cout <<"Camera position new =\n" << AbsoluteCameraPosition << std::endl << " conc.inv() = \n" << conc.inv() << std::endl;
     #endif
+
+
     AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
 
+
     std::cout << "Camera Postion new = \n" << AbsoluteCameraPosition << std::endl;
+
 
 
     // 7. Akomuliranje transformacija:
@@ -337,19 +200,23 @@ int main()
 {
     Sequence seq(0);
     cv::Mat AbsoluteCameraPosition(4,4, CV_64F);
-    for(int i=0 ; i<4 ; i++)
+    for (int i = 0; i < 4; ++i)
     {
-        for(int j=0; j<4 ;j++)
+        for (int j = 0; j < 4; ++j)
         {
-            if(i==j)
-                AbsoluteCameraPosition.at<double>(i, j) = 0;
-            else
+            if (i == j)
+            {
                 AbsoluteCameraPosition.at<double>(i, j) = 1;
+            }
+            else
+            {
+                AbsoluteCameraPosition.at<double>(i, j) = 0;
+            }
         }
     }
-    
+
     for (int i = 0; i < 4541; ++i)
-    {    
+    {
         frame(
             seq.image(0, i),
             seq.image(1, i),
@@ -358,10 +225,7 @@ int main()
             seq,
             i,
             AbsoluteCameraPosition
-        );    
-
-
-
+        );
     }
     return 0;
 }
