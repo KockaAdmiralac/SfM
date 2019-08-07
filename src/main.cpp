@@ -46,7 +46,7 @@ std::vector<cv::DMatch> extractMatches(cv::Ptr<cv::DescriptorMatcher> matcher, c
  */
 void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq)
 {
-    // 1. FEATURE DETECTION
+    // 1. FEATURE DETECTION using cv::SURF feature extractor
     cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(MIN_HESSIAN);
     std::vector<cv::KeyPoint> keypoints0, keypoints1, keypoints2, keypoints3;
     cv::Mat descriptors0, descriptors1, descriptors2, descriptors3;
@@ -56,7 +56,7 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     detector->detectAndCompute(image2, cv::noArray(), keypoints2, descriptors2);
     detector->detectAndCompute(image3, cv::noArray(), keypoints3, descriptors3);
 
-    // 2. FEATURE MATCHING
+    // 2. FEATURE MATCHING using cv::FLANNBASED matcher
     cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     std::vector<cv::DMatch> matchesUp = extractMatches(matcher, descriptors0, descriptors1);
     std::vector<cv::DMatch> matchesDown = extractMatches(matcher, descriptors2, descriptors3);
@@ -113,7 +113,7 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
             //let's see the coordinates of this point:
             std::cout << "\n temp point's coordinates: \n" << tempPoint << std::endl;
-            
+
             cv::Mat Point3D(4, 1, CV_64F);
             Point3D.at<double>(0,0) = tempPoint.x; 
             Point3D.at<double>(1,0) = tempPoint.y;
@@ -121,18 +121,18 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
             Point3D.at<double>(3,0) = 1;
 
             cv::Mat Projection2D = seq.calib[0] * Point3D;
-
+            /*
             std::cout << " and those project to \n" << Projection2D << std::endl;
             std::cout << " and should project to \n [" << sharedKeypoints0[i].x << ", " << sharedKeypoints0[i].y << "]" << std::endl;
 
             std::cout << " and when projecting values before convertPointsFromHomogeneous(): \n\n" << std::endl;
             std::cout << " temp point's coordinates: \n" << triangulatedPointsMat.col(i) << std::endl;
-            
+             */
             cv::Mat tempMat =  seq.calib[0] * triangulatedPointsMat.col(i);
             cv::Mat tempMat2;
 
             convertPointsFromHomogeneous(tempMat.t(), tempMat2);
-
+            
             std::cout << " after dividing " << tempMat2 << std::endl; 
 
 
@@ -280,7 +280,6 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     {
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
-    std::cout << butcheredTriangulatedPoints << triangulatedPoints << std::endl;
 
     if (solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
     {
@@ -293,6 +292,23 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::cout << "\n Translation Vector: \n" << translationVector << std::endl;
     std::cout << "\n ground truth Matrix: \n" << seq.poses.at(0) << std::endl;
 
+    cv::Mat conc(4,4, CV_64F);
+
+    for(int i=0;i<3;i++)
+    {
+        for(int j = 0; j<3;j++)
+        {
+            conc.at<double>(i,j) = rotationMatrix.at<double>(i,j);
+        }
+    }
+    conc.at<double>(0,3) = translationVector.at<double>(0, 0);
+    conc.at<double>(1,3) = translationVector.at<double>(1, 0);
+    conc.at<double>(2,3) = translationVector.at<double>(2, 0);
+    conc.at<double>(3,0) = 0;
+    conc.at<double>(3,1) = 0;
+    conc.at<double>(3,2) = 0;
+    conc.at<double>(3,3) = 1;
+    std::cout << "CONC: \n" << conc.inv() << std::endl;
     // 7.
 }
 
