@@ -267,21 +267,25 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         }
     }
 
-
-    if (solvePnP(fakePoints,fakeProj2, fCameraMatrixCUT, distCoeffs, rotationVector, translationVector))
+    std::vector<double> dumb;
+    /*
+    if (solvePnP(fakePoints,fakeProj2, fCameraMatrixCUT, dumb, rotationVector, translationVector))
     {
         printf("Successfully finished fake solvePNP()\n");
     }
-
+    */
     
+    cv::Mat butcheredTriangulatedPoints(1, triangulatedPoints.size(), CV_64FC3);
+    for (int i = 0; i < triangulatedPoints.size(); ++i)
+    {
+        butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
+    }
+    std::cout << butcheredTriangulatedPoints << triangulatedPoints << std::endl;
 
-
-    /*
-    if (solvePnP(triangulatedPoints, sharedKeypoints2, cameraMatrix, distCoeffs, rotationVector, translationVector))
+    if (solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
     {
         printf("Successfully finished solvePNP()\n");
     }
-     */
 
     cv::Mat rotationMatrix;
     Rodrigues(rotationVector, rotationMatrix);
