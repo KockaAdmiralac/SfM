@@ -1,4 +1,5 @@
+matplotlib
 numpy
-plyfile
 opencv-python
+plyfile
 pykitti
