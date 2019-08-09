@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <opencv2/ximgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/xfeatures2d.hpp>
@@ -145,9 +146,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     }
 
     std::vector<double> dumb;
-    if (solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
+    if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
     {
-        printf("Successfully finished solvePNP()\n");
+        printf("solvePNP() failed.\n");
     }
 
     cv::Mat rotationMatrix;
@@ -186,9 +187,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
     AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
 
-
-    std::cout << "Camera Postion new = \n" << AbsoluteCameraPosition << std::endl;
-
+    std::ofstream matrixFile("our-positions.txt", std::ios_base::app);
+    matrixFile << AbsoluteCameraPosition << "\n";
+    matrixFile.close();
 
 
     // 7. Akomuliranje transformacija:
