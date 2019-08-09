@@ -199,7 +199,7 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector<double> dumb;
     if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
     {
-        printf("failed solvePNP()\n");
+        printf("solvePNP() failed.\n");
     }
 
     cv::Mat rotationMatrix;
@@ -238,11 +238,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
     AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
 
-    
-    std::ofstream matrixFile("our-position.txt", std::ios_base::app);
+    std::ofstream matrixFile("our-positions.txt", std::ios_base::app);
     matrixFile << AbsoluteCameraPosition << "\n";
     matrixFile.close();
-
 
 
     // 7. Akomuliranje transformacija:
