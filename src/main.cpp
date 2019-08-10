@@ -17,7 +17,7 @@
 //
 //#define DEBUG_MODE
 //
-//#define GENERATE_OPFLOW
+#define GENERATE_OPFLOW
 
 //th for filtering matches based on keypoints distance
 #define DISTANCE_TH 140
@@ -149,8 +149,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
             cv::waitKey();
         #endif
     }
-    cv::imwrite(std::string("TEMP/OPFLOW/opflow_new/").append(std::to_string(frameNumber)).append(".png"),opflowImg1);
-    return; //temp return in order to skip...
+    char opflowFilePath[PATH_MAX];
+    sprintf(opflowFilePath, "TEMP/OPFLOW/opflow_%02d/%d.png",seq.number,frameNumber);
+    cv::imwrite(opflowFilePath,opflowImg1);
     #endif
     // triangulatedPointsMat5. TRIANGUATION
 
@@ -169,7 +170,9 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         Vertex v(point.at<double>(0), point.at<double>(1), point.at<double>(2));
         plyVertices.push_back(v);
     }
-    writeply("triangulation.ply", plyVertices);
+    char triangulationFilePath[PATH_MAX];
+    sprintf(triangulationFilePath, "triangulation_%02d.ply", frameNumber);
+    writeply(triangulationFilePath, plyVertices);
 
     // 6. Obtaining rotation and translation matrices.
     cv::Mat rotationVector(3, 1, cv::DataType<double>::type);
@@ -238,19 +241,23 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
 
     AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
 
-    std::ofstream matrixFile("our-positions.txt", std::ios_base::app);
+    char ourPositionsFilePath[PATH_MAX];
+    sprintf(ourPositionsFilePath, "TEMP/POSITIONS/%02d.txt",seq.number);
+    std::ofstream matrixFile(ourPositionsFilePath, std::ios_base::app);
     matrixFile << AbsoluteCameraPosition << "\n";
     matrixFile.close();
 
 
     // 7. Akomuliranje transformacija:
 
+    printf("finished frame %d\n", frameNumber);
+}
 
-    }
 
 int main()
 {
-    Sequence seq(1);
+    int seqNum = 2;
+    Sequence seq(seqNum);
     cv::Mat AbsoluteCameraPosition(4,4, CV_64F);
     for (int i = 0; i < 4; ++i)
     {
@@ -267,7 +274,7 @@ int main()
         }
     }
 
-    for (int i = 0; i < 1101; ++i)
+    for (int i = 0; i <= seq.fileNumber; ++i)
     {
         frame(
             seq.image(0, i),

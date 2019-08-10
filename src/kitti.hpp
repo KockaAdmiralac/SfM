@@ -10,6 +10,7 @@ struct Sequence {
     std::vector<double> times;
     std::vector<cv::Mat> calib;
     cv::Mat tr;
+    int fileNumber;
     Sequence(int number);
     cv::Mat image(int image, int sequence);
 };

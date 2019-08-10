@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <opencv2/imgcodecs.hpp>
@@ -27,9 +28,11 @@ Sequence::Sequence(int number) : number(number) {
     char calibFilename[PATH_MAX];
     char posesFilename[PATH_MAX];
     char timesFilename[PATH_MAX];
+    char imagesPath[PATH_MAX];
     sprintf(calibFilename, "../dataset/sequences/%02d/calib.txt", number);
     sprintf(posesFilename, "../dataset/poses/%02d.txt", number);
     sprintf(timesFilename, "../dataset/sequences/%02d/times.txt", number);
+    sprintf(imagesPath, "../dataset/sequences/%02d/image_0", number);
     std::ifstream calibFile(calibFilename),
                   posesFile(posesFilename),
                   timesFile(timesFilename);
@@ -50,6 +53,12 @@ Sequence::Sequence(int number) : number(number) {
     calibFile.close();
     posesFile.close();
     timesFile.close();
+    fileNumber = 0;
+    for (const auto & entry : std::filesystem::directory_iterator(imagesPath))
+    {
+        ++fileNumber;
+    }
+    std::cout << fileNumber << std::endl;
 }
 
 cv::Mat Sequence::image(int image, int sequence) {

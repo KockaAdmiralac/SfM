@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 Project(SfM)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui ximgproc imgcodecs features2d xfeatures2d)
