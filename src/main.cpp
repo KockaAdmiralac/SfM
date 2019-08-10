@@ -1,26 +1,32 @@
 #include <iostream>
 #include <fstream>
+
 #include <opencv2/ximgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/imgproc.hpp>
-#include "opencv2/highgui.hpp"
+#include <opencv2/highgui.hpp>
+
 #include <kitti.hpp>
 #include <ply.hpp>
 
+/**
+ * Constants
+ */
 // Minimum Hessian constant for SURF.
 #define MIN_HESSIAN 400
 // Lowe's ratio threshold.
 #define RATIO_THRESH 0.7f
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
-//
+// Uncomment this to activate more debug.
 //#define DEBUG_MODE
-//
+// Uncomment this to generate optical flow images.
 #define GENERATE_OPFLOW
-
-//th for filtering matches based on keypoints distance
-#define DISTANCE_TH 140
+// Threshold for filtering matches based on keypoints distance.
+#define DISTANCE_THRESH 140
+// Current KITTI sequence number.
+#define SEQUENCE 2
 
 
 /**
@@ -54,7 +60,7 @@ std::vector<cv::DMatch> extractMatches(cv::Ptr<cv::DescriptorMatcher> matcher, c
  * @param Sequence
  * @param frameNumber
  */
-void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq,int frameNumber, cv::Mat AbsoluteCameraPosition)
+void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq, int frameNumber, cv::Mat AbsoluteCameraPosition)
 {
     // 1. FEATURE DETECTION using cv::SURF feature extractor
     cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(MIN_HESSIAN);
@@ -86,75 +92,56 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector <cv::Point2d> sharedKeypoints0, sharedKeypoints1, sharedKeypoints2;
     for (cv::DMatch match : matchesLeft)
     {
-        int distance =
-                    sqrt(
-                    std::pow((keypoints0[match.queryIdx].pt.x - keypoints2[match.trainIdx].pt.x), 2)
-                    +
-                    std::pow((keypoints0[match.queryIdx].pt.y - keypoints2[match.trainIdx].pt.y), 2)
-                    );
-
-        if(distance > DISTANCE_TH)
+        // <temp>
+        // Filtering matches by distance.
+        int distance = std::pow((keypoints0[match.queryIdx].pt.x - keypoints2[match.trainIdx].pt.x), 2) +
+                       std::pow((keypoints0[match.queryIdx].pt.y - keypoints2[match.trainIdx].pt.y), 2);
+        if (distance > DISTANCE_THRESH * DISTANCE_THRESH)
         {
             continue;
         }
+        // </temp>
         // If the current match is present in both other matches:
         if (hashArrayUp[match.queryIdx].queryIdx != -1)
         {
-
             sharedKeypoints0.push_back(keypoints0[match.queryIdx].pt);
             sharedKeypoints1.push_back(keypoints1[hashArrayUp[match.queryIdx].trainIdx].pt);
             sharedKeypoints2.push_back(keypoints2[match.trainIdx].pt);
-            //temp code:
-            /*
-                cv::circle(image0, keypoints0[match.queryIdx].pt, 31 , cv::Scalar(150,150,150), 7);
-                cv::circle(image2, keypoints2[match.trainIdx].pt, 31 , cv::Scalar(150,150,150), 7);
-                cv::namedWindow("frame 0");
-                cv::namedWindow("frame 1");
-                cv::imshow("frame 0", image0);
-                cv::imshow("frame 1", image2);
-                cv::waitKey(0);
-             */
-            //temp code
         }
     }
 
-    cv::Mat opflowImg1 = image1.clone();
-
+    // 4.5. GENERATE OPTICAL FLOW IMAGES
     #ifdef GENERATE_OPFLOW
+    cv::Mat opflowImage = image1.clone();
+    char opflowFilePath[PATH_MAX];
     for (cv::DMatch m : matchesLeft)
     {
-        float distance =
-                    sqrt(
-                    std::pow((keypoints0[m.queryIdx].pt.x - keypoints2[m.trainIdx].pt.x), 2)
-                    +
-                    std::pow((keypoints0[m.queryIdx].pt.y - keypoints2[m.trainIdx].pt.y), 2)
-        );
-
-
-                    
-        if(distance > DISTANCE_TH)
+        cv::Point2f oldPoint = keypoints0[m.queryIdx].pt;
+        cv::Point2f newPoint = keypoints2[m.trainIdx].pt; 
+        // <temp>
+        // Filtering matches by distance.
+        float distance = std::pow((oldPoint.x - newPoint.x), 2) +
+                         std::pow((oldPoint.y - newPoint.y), 2);
+        if (distance > DISTANCE_THRESH * DISTANCE_THRESH)
         {
             continue;
         }
+        // </temp>
+        cv::circle(opflowImage, oldPoint, 3, cv::Scalar(0, 0, 255), 1);
 
-        cv::Point2f point_old = keypoints0[m.queryIdx].pt;
-        cv::Point2f point_new = keypoints2[m.trainIdx].pt; 
-        cv::circle(opflowImg1, point_old, 3, cv::Scalar(0, 0, 255), 1);
-
-        cv::circle(opflowImg1, point_new, 3, cv::Scalar(255, 0, 0), 1); 
-        cv::line(opflowImg1, point_old, point_new, cv::Scalar(0, 255, 0), 2, 8, 0);
+        cv::circle(opflowImage, newPoint, 3, cv::Scalar(255, 0, 0), 1); 
+        cv::line(opflowImage, oldPoint, newPoint, cv::Scalar(0, 255, 0), 2, 8, 0);
         #ifdef DEBUG_MODE
-            printf("%f | %f %f | %f %f\n",distance,keypoints0[m.queryIdx].pt.x, keypoints0[m.queryIdx].pt.y, keypoints2[m.trainIdx].pt.x, keypoints2[m.trainIdx].pt.y);
-            cv::imshow("opflow_frame", opflowImg1);
-            cv::waitKey();
+        printf("%f | %f %f | %f %f\n", distance, oldPoint.x, oldPoint.y, newPoint.x, newPoint.y);
+        cv::imshow("opflow frame", opflowImage);
+        cv::waitKey();
         #endif
     }
-    char opflowFilePath[PATH_MAX];
-    sprintf(opflowFilePath, "TEMP/OPFLOW/opflow_%02d/%d.png",seq.number,frameNumber);
-    cv::imwrite(opflowFilePath,opflowImg1);
+    sprintf(opflowFilePath, "TEMP/OPFLOW/opflow_%02d/%d.png", seq.number, frameNumber);
+    cv::imwrite(opflowFilePath, opflowImage);
     #endif
-    // triangulatedPointsMat5. TRIANGUATION
 
+    // 5. TRIANGULATION
     cv::Mat triangulatedPointsMat;
     std::vector<cv::Point3d> triangulatedPoints;
     VertexList plyVertices;
@@ -171,21 +158,26 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         plyVertices.push_back(v);
     }
     char triangulationFilePath[PATH_MAX];
-    sprintf(triangulationFilePath, "triangulation_%02d.ply", frameNumber);
+    sprintf(triangulationFilePath, "TEMP/TRIANGULATION/%02d/%02d.ply", seq.number, frameNumber);
     writeply(triangulationFilePath, plyVertices);
 
-    // 6. Obtaining rotation and translation matrices.
+    // 6. TRANSFORMATION MATRIX ESTIMATION
     cv::Mat rotationVector(3, 1, cv::DataType<double>::type);
+    cv::Mat rotationMatrix;
     cv::Mat translationVector(3, 1, cv::DataType<double>::type);
     cv::Mat cameraMatrix(3, 3, CV_64F);
+    cv::Mat butcheredTriangulatedPoints(1, triangulatedPoints.size(), CV_64FC3);
+    std::vector<double> dummyDistortionCoefficients;
+    cv::Mat concatenatedTransformationMatrix(4,4, CV_64F);
 
-    rotationVector.at<double>(0,0) = 0;
-    rotationVector.at<double>(1,0) = 0;
-    rotationVector.at<double>(2,0) = 0;
+    // PROVERITI
+    rotationVector.at<double>(0, 0) = 0;
+    rotationVector.at<double>(1, 0) = 0;
+    rotationVector.at<double>(2, 0) = 0;
 
-    translationVector.at<double>(0,0) = 0;
-    translationVector.at<double>(1,0) = 0;
-    translationVector.at<double>(2,0) = 0;
+    translationVector.at<double>(0, 0) = 0;
+    translationVector.at<double>(1, 0) = 0;
+    translationVector.at<double>(2, 0) = 0;
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
@@ -193,72 +185,78 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
             cameraMatrix.at<double>(i, j) =  seq.calib[0].at<double>(i, j);
         }
     }
-    cv::Mat butcheredTriangulatedPoints(1, triangulatedPoints.size(), CV_64FC3);
-    for (int i = 0; i < triangulatedPoints.size(); ++i)
+    for (size_t i = 0; i < triangulatedPoints.size(); ++i)
     {
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
 
-    std::vector<double> dumb;
-    if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dumb, rotationVector, translationVector))
+    // Obtaining rotation and translation vectors.
+    if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dummyDistortionCoefficients, rotationVector, translationVector))
     {
-        printf("solvePNP() failed.\n");
+        printf("solvePnPRansac() failed on frame %d of sequence %d.\n", frameNumber, seq.number);
     }
 
-    cv::Mat rotationMatrix;
+    // Turning rotation vector into rotation matrix.
     Rodrigues(rotationVector, rotationMatrix);
 
-    #ifdef DEBUG_MODE
-    std::cout << "\n Rotation Matrix: \n" << rotationMatrix << std::endl;
-    std::cout << "\n Translation Vector: \n" << translationVector << std::endl;
-    std::cout << "\n ground truth Matrix: \n" << seq.poses.at(frameNumber) << std::endl;
-    #endif //DEBUG_MODE
-
-    cv::Mat conc(4,4, CV_64F);
-
+    // Concatenating rotation matrix and translation vector.
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            conc.at<double>(i, j) = rotationMatrix.at<double>(i, j);
+            concatenatedTransformationMatrix.at<double>(i, j) = rotationMatrix.at<double>(i, j);
         }
     }
-    conc.at<double>(0, 3) = translationVector.at<double>(0, 0);
-    conc.at<double>(1, 3) = translationVector.at<double>(1, 0);
-    conc.at<double>(2, 3) = translationVector.at<double>(2, 0);
-    conc.at<double>(3, 0) = 0;
-    conc.at<double>(3, 1) = 0;
-    conc.at<double>(3, 2) = 0;
-    conc.at<double>(3, 3) = 1;
-    #ifdef DEBUG_MODE
+    concatenatedTransformationMatrix.at<double>(0, 3) = translationVector.at<double>(0, 0);
+    concatenatedTransformationMatrix.at<double>(1, 3) = translationVector.at<double>(1, 0);
+    concatenatedTransformationMatrix.at<double>(2, 3) = translationVector.at<double>(2, 0);
+    concatenatedTransformationMatrix.at<double>(3, 0) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 1) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 2) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 3) = 1;
 
-    std::cout << "rotation matrix: \n" << rotationMatrix << std::endl;
-    std::cout << "translation vector: \n " << translationVector << std::endl;
-    std::cout << "CONC: \n" << conc << std::endl;
-    std::cout <<"Camera position new =\n" << AbsoluteCameraPosition << std::endl << " conc.inv() = \n" << conc.inv() << std::endl;
-    #endif
+    // 7. TRANSFORMATION ACCUMULATION
+    AbsoluteCameraPosition = AbsoluteCameraPosition * concatenatedTransformationMatrix.inv();
 
-
-    AbsoluteCameraPosition = AbsoluteCameraPosition * conc.inv();
-
-    char ourPositionsFilePath[PATH_MAX];
-    sprintf(ourPositionsFilePath, "TEMP/POSITIONS/%02d.txt",seq.number);
-    std::ofstream matrixFile(ourPositionsFilePath, std::ios_base::app);
-    matrixFile << AbsoluteCameraPosition << "\n";
+    // 8. WRITING RESULTS
+    char matrixFilePath[PATH_MAX];
+    sprintf(matrixFilePath, "TEMP/MATRICES/%02d.txt", seq.number);
+    std::ofstream matrixFile(matrixFilePath, std::ios_base::app);
+    matrixFile << AbsoluteCameraPosition.at<double>(0, 0)
+               << " "
+               << AbsoluteCameraPosition.at<double>(0, 1)
+               << " "
+               << AbsoluteCameraPosition.at<double>(0, 2)
+               << " "
+               << AbsoluteCameraPosition.at<double>(0, 3)
+               << " "
+               << AbsoluteCameraPosition.at<double>(1, 0)
+               << " "
+               << AbsoluteCameraPosition.at<double>(1, 1)
+               << " "
+               << AbsoluteCameraPosition.at<double>(1, 2)
+               << " "
+               << AbsoluteCameraPosition.at<double>(1, 3)
+               << " "
+               << AbsoluteCameraPosition.at<double>(2, 0)
+               << " "
+               << AbsoluteCameraPosition.at<double>(2, 1)
+               << " "
+               << AbsoluteCameraPosition.at<double>(2, 2)
+               << " "
+               << AbsoluteCameraPosition.at<double>(2, 3)
+               << "\n";
     matrixFile.close();
-
-
-    // 7. Akomuliranje transformacija:
-
-    printf("finished frame %d\n", frameNumber);
+    printf("Finished frame %d.\n", frameNumber);
 }
 
 
 int main()
 {
-    int seqNum = 2;
-    Sequence seq(seqNum);
+    Sequence seq(SEQUENCE);
     cv::Mat AbsoluteCameraPosition(4,4, CV_64F);
+
+    // Initializing position matrix.
     for (int i = 0; i < 4; ++i)
     {
         for (int j = 0; j < 4; ++j)
@@ -274,6 +272,7 @@ int main()
         }
     }
 
+    // Iterating through frames.
     for (int i = 0; i <= seq.fileNumber; ++i)
     {
         frame(

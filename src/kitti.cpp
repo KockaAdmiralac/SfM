@@ -53,11 +53,10 @@ Sequence::Sequence(int number) : number(number) {
     calibFile.close();
     posesFile.close();
     timesFile.close();
-    fileNumber = 0;
-    for (const auto & entry : std::filesystem::directory_iterator(imagesPath))
-    {
-        ++fileNumber;
-    }
+    fileNumber = std::distance(
+        std::filesystem::directory_iterator(imagesPath),
+        std::filesystem::directory_iterator{}
+    );
     std::cout << fileNumber << std::endl;
 }
 

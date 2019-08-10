@@ -5,7 +5,8 @@ import pykitti
 
 points = []
 ds = pykitti.odometry('../dataset', '00')
-for i in range(100):
+for i in range(len(ds.timestamps)):
+    print('Collecting point cloud', i, '     ', end='\r')
     for point in ds.get_velo(i):
         point[3] = 1
         tmat = np.matmul(ds.poses[i][:3], ds.calib.T_cam0_velo)
