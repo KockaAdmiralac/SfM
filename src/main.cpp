@@ -5,7 +5,6 @@
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/imgproc.hpp>
 #include "opencv2/highgui.hpp"
-
 #include <kitti.hpp>
 #include <ply.hpp>
 
@@ -15,8 +14,13 @@
 #define RATIO_THRESH 0.7f
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
-// Debug mode (commend it not using)
+//
+//#define DEBUG_MODE
+//
+//#define GENERATE_OPFLOW
 
+//th for filtering matches based on keypoints distance
+#define DISTANCE_TH 140
 
 
 /**
@@ -82,9 +86,21 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector <cv::Point2d> sharedKeypoints0, sharedKeypoints1, sharedKeypoints2;
     for (cv::DMatch match : matchesLeft)
     {
+        int distance =
+                    sqrt(
+                    std::pow((keypoints0[match.queryIdx].pt.x - keypoints2[match.trainIdx].pt.x), 2)
+                    +
+                    std::pow((keypoints0[match.queryIdx].pt.y - keypoints2[match.trainIdx].pt.y), 2)
+                    );
+
+        if(distance > DISTANCE_TH)
+        {
+            continue;
+        }
         // If the current match is present in both other matches:
         if (hashArrayUp[match.queryIdx].queryIdx != -1)
         {
+
             sharedKeypoints0.push_back(keypoints0[match.queryIdx].pt);
             sharedKeypoints1.push_back(keypoints1[hashArrayUp[match.queryIdx].trainIdx].pt);
             sharedKeypoints2.push_back(keypoints2[match.trainIdx].pt);
@@ -102,7 +118,42 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         }
     }
 
-    // 5. TRIANGUATION
+    cv::Mat opflowImg1 = image1.clone();
+
+    #ifdef GENERATE_OPFLOW
+    for (cv::DMatch m : matchesLeft)
+    {
+        float distance =
+                    sqrt(
+                    std::pow((keypoints0[m.queryIdx].pt.x - keypoints2[m.trainIdx].pt.x), 2)
+                    +
+                    std::pow((keypoints0[m.queryIdx].pt.y - keypoints2[m.trainIdx].pt.y), 2)
+        );
+
+
+                    
+        if(distance > DISTANCE_TH)
+        {
+            continue;
+        }
+
+        cv::Point2f point_old = keypoints0[m.queryIdx].pt;
+        cv::Point2f point_new = keypoints2[m.trainIdx].pt; 
+        cv::circle(opflowImg1, point_old, 3, cv::Scalar(0, 0, 255), 1);
+
+        cv::circle(opflowImg1, point_new, 3, cv::Scalar(255, 0, 0), 1); 
+        cv::line(opflowImg1, point_old, point_new, cv::Scalar(0, 255, 0), 2, 8, 0);
+        #ifdef DEBUG_MODE
+            printf("%f | %f %f | %f %f\n",distance,keypoints0[m.queryIdx].pt.x, keypoints0[m.queryIdx].pt.y, keypoints2[m.trainIdx].pt.x, keypoints2[m.trainIdx].pt.y);
+            cv::imshow("opflow_frame", opflowImg1);
+            cv::waitKey();
+        #endif
+    }
+    cv::imwrite(std::string("TEMP/OPFLOW/opflow_new/").append(std::to_string(frameNumber)).append(".png"),opflowImg1);
+    return; //temp return in order to skip...
+    #endif
+    // triangulatedPointsMat5. TRIANGUATION
+
     cv::Mat triangulatedPointsMat;
     std::vector<cv::Point3d> triangulatedPoints;
     VertexList plyVertices;
@@ -195,11 +246,11 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     // 7. Akomuliranje transformacija:
 
 
-}
+    }
 
 int main()
 {
-    Sequence seq(0);
+    Sequence seq(1);
     cv::Mat AbsoluteCameraPosition(4,4, CV_64F);
     for (int i = 0; i < 4; ++i)
     {
@@ -216,7 +267,7 @@ int main()
         }
     }
 
-    for (int i = 0; i < 4541; ++i)
+    for (int i = 0; i < 1101; ++i)
     {
         frame(
             seq.image(0, i),
