@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import pykitti
 import re
+import sys
+
+if len(sys.argv) < 2:
+    print('Please input sequence number as the first argument.')
+    exit(1)
 
 arrays = re.compile(r'\[([^\]]*)\]', re.M | re.S)
 
@@ -12,8 +17,7 @@ for pose in dataset.poses:
         point.append(row[3])
     dataset_points.append(point)
 
-
-with open('our-positions.txt') as file:
+with open('TEMP/POSITIONS/{:02}.txt'.format(int(sys.argv[1]))) as file:
     text = ''.join(file.readlines())
     points = []
     for match in re.findall(arrays, text):
