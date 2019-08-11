@@ -2,80 +2,58 @@ import numpy as np
 import sys
 import math
 import matplotlib.pyplot as plt
+
 if len(sys.argv) < 2:
     print('Please input sequence number as the first argument.')
     exit(1)
+sequence = int(sys.argv[1])
 
+def load_matrix(line):
+    array = np.array([float(x) for x in line.split(' ')]).reshape(3, 4).tolist()
+    array.append([0, 0, 0, 1])
+    return np.array(array)
 
-with open('TEMP/MATRICES/{:02}.txt'.format(int(sys.argv[1]))) as ourPosesFile:
-    with open('../dataset/poses/{:02}.txt'.format(int(sys.argv[1]))) as gtPosesFile:
-        errorSum = 0
-        total = 0
-        aboveHalf = 0
-        aboveOne = 0
-        aboveTwo = 0
-        aboveThree = 0
-        ourPoses = ourPosesFile.readlines()
-        gtPoses = gtPosesFile.readlines()
+with open('TEMP/MATRICES/{:02}.txt'.format(sequence)) as our_poses_file:
+    with open('../dataset/poses/{:02}.txt'.format(sequence)) as gt_poses_file:
+        our_poses = our_poses_file.readlines()
+        gt_poses = gt_poses_file.readlines()
         errors = []
-        for i in range(len(ourPoses)-1):
-            array = ourPoses[i].split(' ')
-            array1 = [float(x) for x in array]
-            array1 = np.array(array1).reshape(3, 4)
-            array2 = array1.tolist()
-            array2.append([0,0,0,1])
-            ourPos1 = np.array(array2)
+        t_errors = []
+        for i in range(len(our_poses) - 1):
+            our_pos_1 = load_matrix(our_poses[i])
+            our_pos_2 = load_matrix(our_poses[i + 1])
+            gt_pos_1 = load_matrix(gt_poses[i])
+            gt_pos_2 = load_matrix(gt_poses[i + 1])
 
-            array = ourPoses[i+1].split(' ')
-            array1 = [float(x) for x in array]
-            array1 = np.array(array1).reshape(3, 4)
-            array2 = array1.tolist()
-            array2.append([0,0,0,1])
-            ourPos2 = np.array(array2)
+            pose_delta_gt = np.matmul(np.linalg.inv(gt_pos_1), gt_pos_2)
+            pose_delta_our = np.matmul(np.linalg.inv(our_pos_1), our_pos_2)
+            pose_error = np.matmul(np.linalg.inv(pose_delta_our), pose_delta_gt) 
 
-            array = gtPoses[i].split(' ')
-            array1 = [float(x) for x in array]
-            array1 = np.array(array1).reshape(3, 4)
-            array2 = array1.tolist()
-            array2.append([0,0,0,1])
-            gtPos1 = np.array(array2)
-
-            array = gtPoses[i+1].split(' ')
-            array1 = [float(x) for x in array]
-            array1 = np.array(array1).reshape(3, 4)
-            array2 = array1.tolist()
-            array2.append([0,0,0,1])
-            gtPos2 = np.array(array2)
-
-            pose_delta_gt = np.matmul(np.linalg.inv(gtPos1),gtPos2)
-            pose_delta_our = np.matmul(np.linalg.inv(ourPos1), ourPos2)
-            pose_error = np.matmul(np.linalg.inv(pose_delta_our),pose_delta_gt) 
-
+            # https://github.com/alexkreimer/odometry/blob/master/devkit/cpp/evaluate_odometry.cpp#L67-L80
             a = pose_error[0][0]
             b = pose_error[1][1]
             c = pose_error[2][2]
-            d = 0.5*(a+b+c-1.0)
-            
-            r_err =  math.acos(max(min(d,1.0),-1.0))
-            print(r_err)
+            d = 0.5 * (a + b + c - 1.0)
+
+            dx = pose_error[0][3]
+            dy = pose_error[1][3]
+            dz = pose_error[2][3]
+
+            r_err = math.acos(max(min(d, 1.0), -1.0))
+            t_err = math.sqrt(dx * dx + dy * dy + dz * dz)
             errors.append(r_err)
-            
-            errorSum += r_err
-            
-            total += 1
-            if r_err > 0.5:
-                aboveHalf += 1
-            if r_err > 1:
-                aboveOne += 1
-            if r_err > 2:
-                aboveTwo += 1
-            if r_err >3:
-                aboveThree += 1
-print("rad/m percent | ", errorSum/total, "%")                
-print("total         | ",total)
-print("aboveHalf     | ",aboveHalf)
-print("aboveOne      | ",aboveOne)
-print("aboveTwo      | ",aboveTwo)
-print("aboveThree    | ",aboveThree)
+            t_errors.append(t_err)
+
+print('rad/frame percent |', sum(errors)/len(errors), '%')
+print('total             |', len(errors))
+print('above half        |', len([x for x in errors if x > 0.5]))
+print('above one         |', len([x for x in errors if x > 1]))
+print('above two         |', len([x for x in errors if x > 2]))
+print('above three       |', len([x for x in errors if x > 3]))
 plt.plot(errors)
+plt.show()
+
+print('m/frame percent   |', sum(t_errors)/len(t_errors), '%')                
+print('total             |', len(t_errors))
+plt.plot(t_errors)
 plt.show()

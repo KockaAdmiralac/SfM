@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 set(HEADERS
+    src/kdtree.hpp
     src/kitti.hpp
     src/ply.hpp
     src/RANSAC.hpp
@@ -26,6 +27,7 @@ set(HEADERS
 )
 
 set(SOURCES
+    src/kdtree.cpp
     src/kitti.cpp
     src/ply.cpp
     src/RANSAC.cpp

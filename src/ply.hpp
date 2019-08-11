@@ -1,3 +1,5 @@
+#ifndef _PLY_H
+#define _PLY_H
 #include <libplyxx.h>
 
 struct Vertex {
@@ -16,3 +18,4 @@ struct Mesh {
 
 void readply(PATH_STRING filename, VertexList& vertices);
 void writeply(PATH_STRING filename, VertexList& vertices);
+#endif
