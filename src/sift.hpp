@@ -11,7 +11,6 @@ using namespace cv;
     //resize using bi-linear interpolation (don't think we really need to do this)
     //Gaussian convolution
 
-
 Mat downsample(Mat image);
 
 void SIFT(Mat image);

@@ -9,7 +9,7 @@
 
 #include <kitti.hpp>
 #include <ply.hpp>
-
+#include <RANSAC.hpp>
 /**
  * Constants
  */
@@ -190,6 +190,32 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     {
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
+
+    //temp code:
+
+        ourRANSAC ransac(10,300,300,&seq);
+        ransac.setImages(image0,image2);
+        ransac.setRANSACArguments(butcheredTriangulatedPoints,sharedKeypoints2,cameraMatrix,
+                                dummyDistortionCoefficients,rotationVector,translationVector);
+        
+        ransac.calculateExtrinsics();
+
+
+        exit(0);
+
+
+
+
+
+
+
+    //end temp code
+
+
+
+
+
+
     // Obtaining rotation and translation vectors.
     if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dummyDistortionCoefficients, rotationVector, translationVector))
     {

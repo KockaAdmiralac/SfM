@@ -16,6 +16,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 set(HEADERS
     src/kitti.hpp
     src/ply.hpp
+    src/RANSAC.hpp
     src/sift.hpp
     src/surf.hpp
     src/lk.hpp
@@ -27,6 +28,7 @@ set(HEADERS
 set(SOURCES
     src/kitti.cpp
     src/ply.cpp
+    src/RANSAC.cpp
     src/sift.cpp
     src/surf.cpp
     src/lk.cpp
