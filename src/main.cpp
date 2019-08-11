@@ -16,7 +16,7 @@
 // Minimum Hessian constant for SURF.
 #define MIN_HESSIAN 400
 // Lowe's ratio threshold.
-#define RATIO_THRESH 0.7f
+#define RATIO_THRESH 1.2f
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
 // Uncomment this to activate more debug.
@@ -24,9 +24,9 @@
 // Uncomment this to generate optical flow images.
 #define GENERATE_OPFLOW
 // Threshold for filtering matches based on keypoints distance.
-#define DISTANCE_THRESH 140
+#define DISTANCE_THRESH 600
 // Current KITTI sequence number.
-#define SEQUENCE 2
+#define SEQUENCE 1
 
 
 /**
@@ -58,12 +58,13 @@ std::vector<cv::DMatch> extractMatches(cv::Ptr<cv::DescriptorMatcher> matcher, c
  * @param image2 Left image of the second frame
  * @param image3 Right image of the second frame
  * @param Sequence
+ * 
  * @param frameNumber
  */
 void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Sequence seq, int frameNumber, cv::Mat AbsoluteCameraPosition)
 {
     // 1. FEATURE DETECTION using cv::SURF feature extractor
-    cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(MIN_HESSIAN);
+    cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create(MIN_HESSIAN);
     std::vector<cv::KeyPoint> keypoints0, keypoints1, keypoints2, keypoints3;
     cv::Mat descriptors0, descriptors1, descriptors2, descriptors3;
 
@@ -189,7 +190,6 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     {
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
-
     // Obtaining rotation and translation vectors.
     if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dummyDistortionCoefficients, rotationVector, translationVector))
     {
@@ -248,6 +248,16 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
                << "\n";
     matrixFile.close();
     printf("Finished frame %d.\n", frameNumber);
+
+    cv::Mat AbsoluteRotationMatrix(3,3,CV_64F);
+    for(int i = 0 ; i < 3 ; i++)
+    {
+        for(int j = 0 ; j < 3 ; j++)
+        {
+            AbsoluteRotationMatrix.at<double>(i, j) = AbsoluteCameraPosition.at<double>(i, j);
+        }
+    }
+
 }
 
 
@@ -273,7 +283,7 @@ int main()
     }
 
     // Iterating through frames.
-    for (int i = 0; i <= seq.fileNumber; ++i)
+    for (int i = 0; i < seq.fileNumber-1 ; ++i)
     {
         frame(
             seq.image(0, i),
