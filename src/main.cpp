@@ -16,7 +16,7 @@
 // Minimum Hessian constant for SURF.
 #define MIN_HESSIAN 400
 // Lowe's ratio threshold.
-#define RATIO_THRESH 1.2f
+#define RATIO_THRESH 0.7f
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
 // Uncomment this to activate more debug.
@@ -26,7 +26,7 @@
 // Threshold for filtering matches based on keypoints distance.
 #define DISTANCE_THRESH 600
 // Current KITTI sequence number.
-#define SEQUENCE 1
+#define SEQUENCE 5
 
 
 /**
@@ -78,6 +78,12 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector<cv::DMatch> matchesUp = extractMatches(matcher, descriptors0, descriptors1);
     std::vector<cv::DMatch> matchesDown = extractMatches(matcher, descriptors2, descriptors3);
     std::vector<cv::DMatch> matchesLeft = extractMatches(matcher, descriptors0, descriptors2);
+
+    // Kurac
+    cv::Mat outImage;
+    cv::drawMatches(image0, keypoints0, image1, keypoints1, matchesUp, outImage);
+    cv::imshow("kurac", outImage);
+    cv::waitKey(0);
 
     // 3. FEATURE MATCH PROCESSING
     cv::DMatch hashArrayUp[MAX_MATCHES];
@@ -191,56 +197,46 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         butcheredTriangulatedPoints.at<cv::Point3d>(i) = triangulatedPoints[i];
     }
 
-    //temp code:
-
-        ourRANSAC ransac(10,300,300,&seq);
-        ransac.setImages(image0,image2);
-        ransac.setRANSACArguments(butcheredTriangulatedPoints,sharedKeypoints2,cameraMatrix,
-                                dummyDistortionCoefficients,rotationVector,translationVector);
-        
-        ransac.calculateExtrinsics();
-
-
-        exit(0);
-
-
-
-
-
-
-
-    //end temp code
-
-
-
-
-
-
     // Obtaining rotation and translation vectors.
-    if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dummyDistortionCoefficients, rotationVector, translationVector))
-    {
-        printf("solvePnPRansac() failed on frame %d of sequence %d.\n", frameNumber, seq.number);
-    }
-
-    // Turning rotation vector into rotation matrix.
-    Rodrigues(rotationVector, rotationMatrix);
-
-    // Concatenating rotation matrix and translation vector.
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
+    #ifdef USE_THEIR_SOLVEPNP
+        if (!solvePnPRansac(butcheredTriangulatedPoints, sharedKeypoints2, cameraMatrix, dummyDistortionCoefficients, rotationVector, translationVector))
         {
-            concatenatedTransformationMatrix.at<double>(i, j) = rotationMatrix.at<double>(i, j);
+            printf("solvePnPRansac() failed on frame %d of sequence %d.\n", frameNumber, seq.number);
         }
-    }
-    concatenatedTransformationMatrix.at<double>(0, 3) = translationVector.at<double>(0, 0);
-    concatenatedTransformationMatrix.at<double>(1, 3) = translationVector.at<double>(1, 0);
-    concatenatedTransformationMatrix.at<double>(2, 3) = translationVector.at<double>(2, 0);
-    concatenatedTransformationMatrix.at<double>(3, 0) = 0;
-    concatenatedTransformationMatrix.at<double>(3, 1) = 0;
-    concatenatedTransformationMatrix.at<double>(3, 2) = 0;
-    concatenatedTransformationMatrix.at<double>(3, 3) = 1;
 
+        // Turning rotation vector into rotation matrix.
+        Rodrigues(rotationVector, rotationMatrix);
+
+        // Concatenating rotation matrix and translation vector.
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                concatenatedTransformationMatrix.at<double>(i, j) = rotationMatrix.at<double>(i, j);
+            }
+        }
+        concatenatedTransformationMatrix.at<double>(0, 3) = translationVector.at<double>(0, 0);
+        concatenatedTransformationMatrix.at<double>(1, 3) = translationVector.at<double>(1, 0);
+        concatenatedTransformationMatrix.at<double>(2, 3) = translationVector.at<double>(2, 0);
+        concatenatedTransformationMatrix.at<double>(3, 0) = 0;
+        concatenatedTransformationMatrix.at<double>(3, 1) = 0;
+        concatenatedTransformationMatrix.at<double>(3, 2) = 0;
+        concatenatedTransformationMatrix.at<double>(3, 3) = 1;
+    #endif
+    
+    #ifndef USE_THEIR_SOLVEPNP
+        ourRANSAC ransac(30,120,50,&seq);
+        ransac.setImages(image0,image2);
+        ransac.setRANSACArguments(butcheredTriangulatedPoints,sharedKeypoints2,sharedKeypoints0,cameraMatrix,
+                                dummyDistortionCoefficients,rotationVector,translationVector);
+        ransac.calculateExtrinsics();
+        ransac.returnValues(rotationVector,translationVector);
+
+        std::cout << "#############################" << std::endl;
+        std::cout << "rotationVector\n" << rotationVector << std::endl;
+        std::cout << "translationVector\n" << translationVector << std::endl;
+
+    #endif 
     // 7. TRANSFORMATION ACCUMULATION
     AbsoluteCameraPosition = AbsoluteCameraPosition * concatenatedTransformationMatrix.inv();
 
@@ -278,7 +274,7 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     cv::Mat AbsoluteRotationMatrix(3,3,CV_64F);
     for(int i = 0 ; i < 3 ; i++)
     {
-        for(int j = 0 ; j < 3 ; j++)
+        for(int j = 0 ; j < 3 ; j++) 
         {
             AbsoluteRotationMatrix.at<double>(i, j) = AbsoluteCameraPosition.at<double>(i, j);
         }
