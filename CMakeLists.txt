@@ -14,29 +14,29 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 set(HEADERS
-    src/kdtree.hpp
+    # src/kdtree.hpp
     src/kitti.hpp
     src/ply.hpp
-    src/RANSAC.hpp
+    src/ransac.hpp
     src/sift.hpp
     src/surf.hpp
     src/lk.hpp
     src/klt.hpp
-    src/kanatani.hpp
-    src/icp.hpp
+    # src/kanatani.hpp
+    # src/icp.hpp
 )
 
 set(SOURCES
-    src/kdtree.cpp
+    # src/kdtree.cpp
     src/kitti.cpp
     src/ply.cpp
-    src/RANSAC.cpp
+    src/ransac.cpp
     src/sift.cpp
     src/surf.cpp
     src/lk.cpp
     src/klt.cpp
-    src/kanatani.cpp
-    src/icp.cpp
+    # src/kanatani.cpp
+    # src/icp.cpp
     src/main.cpp
 )
 

@@ -5,11 +5,11 @@ bool areClose(double a, double b) {
 	return abs(a - b) < EPSILON;
 }
 
-bool operator ==(const Vertex& a, const Vertex& b) {
+bool operator ==(const cv::Point3d &a, const cv::Point3d &b) {
     return areClose(a.x, b.x) && areClose(a.y, b.y) && areClose(a.z, b.z);
 }
 
-void readply(PATH_STRING filename, VertexList& vertices) {
+void readply(PATH_STRING filename, std::vector<cv::Point3d> &vertices) {
 	libply::File file(filename);
 	const libply::ElementsDefinition& definitions = file.definitions();
 
@@ -23,7 +23,7 @@ void readply(PATH_STRING filename, VertexList& vertices) {
 	file.read();
 }
 
-void writeply(PATH_STRING filename, VertexList& vertices) {
+void writeply(PATH_STRING filename, std::vector<cv::Point3d> &vertices) {
 	libply::FileOut file(filename, libply::File::Format::BINARY_LITTLE_ENDIAN);
 	file.setElementsDefinition({
 		libply::Element("vertex", vertices.size(), {
@@ -34,7 +34,7 @@ void writeply(PATH_STRING filename, VertexList& vertices) {
 	});
 
 	libply::ElementWriteCallback vertexCallback = [&vertices](libply::ElementBuffer& e, size_t index) {
-		const Vertex& v = vertices[index];
+		const cv::Point3d &v = vertices[index];
 		e[0] = v.x;
 		e[1] = v.y;
 		e[2] = v.z;
