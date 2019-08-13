@@ -26,7 +26,7 @@
 // Threshold for filtering matches based on keypoints distance.
 #define DISTANCE_THRESH 600
 // Current KITTI sequence number.
-#define SEQUENCE 5
+#define SEQUENCE 1
 
 
 /**
@@ -78,12 +78,14 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
     std::vector<cv::DMatch> matchesUp = extractMatches(matcher, descriptors0, descriptors1);
     std::vector<cv::DMatch> matchesDown = extractMatches(matcher, descriptors2, descriptors3);
     std::vector<cv::DMatch> matchesLeft = extractMatches(matcher, descriptors0, descriptors2);
+    
+    #ifdef DEBUG_MODE
+        cv::Mat outImage;
+        cv::drawMatches(image0, keypoints0, image1, keypoints1, matchesUp, outImage);
+        cv::imshow("matches", outImage);
+        cv::waitKey(0);
+    #endif
 
-    // Kurac
-    cv::Mat outImage;
-    cv::drawMatches(image0, keypoints0, image1, keypoints1, matchesUp, outImage);
-    cv::imshow("kurac", outImage);
-    cv::waitKey(0);
 
     // 3. FEATURE MATCH PROCESSING
     cv::DMatch hashArrayUp[MAX_MATCHES];
@@ -208,35 +210,36 @@ void frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seque
         Rodrigues(rotationVector, rotationMatrix);
 
         // Concatenating rotation matrix and translation vector.
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                concatenatedTransformationMatrix.at<double>(i, j) = rotationMatrix.at<double>(i, j);
-            }
-        }
-        concatenatedTransformationMatrix.at<double>(0, 3) = translationVector.at<double>(0, 0);
-        concatenatedTransformationMatrix.at<double>(1, 3) = translationVector.at<double>(1, 0);
-        concatenatedTransformationMatrix.at<double>(2, 3) = translationVector.at<double>(2, 0);
-        concatenatedTransformationMatrix.at<double>(3, 0) = 0;
-        concatenatedTransformationMatrix.at<double>(3, 1) = 0;
-        concatenatedTransformationMatrix.at<double>(3, 2) = 0;
-        concatenatedTransformationMatrix.at<double>(3, 3) = 1;
+
     #endif
     
     #ifndef USE_THEIR_SOLVEPNP
-        ourRANSAC ransac(30,120,50,&seq);
+        ourRANSAC ransac(8,100,23,&seq);
         ransac.setImages(image0,image2);
         ransac.setRANSACArguments(butcheredTriangulatedPoints,sharedKeypoints2,sharedKeypoints0,cameraMatrix,
                                 dummyDistortionCoefficients,rotationVector,translationVector);
         ransac.calculateExtrinsics();
-        ransac.returnValues(rotationVector,translationVector);
+        ransac.returnValues(rotationMatrix,translationVector);
 
         std::cout << "#############################" << std::endl;
-        std::cout << "rotationVector\n" << rotationVector << std::endl;
+        std::cout << "rotationVector\n" << rotationMatrix << std::endl;
         std::cout << "translationVector\n" << translationVector << std::endl;
 
     #endif 
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            concatenatedTransformationMatrix.at<double>(i, j) = rotationMatrix.at<double>(i, j);
+        }
+    }
+    concatenatedTransformationMatrix.at<double>(0, 3) = translationVector.at<double>(0, 0);
+    concatenatedTransformationMatrix.at<double>(1, 3) = translationVector.at<double>(1, 0);
+    concatenatedTransformationMatrix.at<double>(2, 3) = translationVector.at<double>(2, 0);
+    concatenatedTransformationMatrix.at<double>(3, 0) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 1) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 2) = 0;
+    concatenatedTransformationMatrix.at<double>(3, 3) = 1;
     // 7. TRANSFORMATION ACCUMULATION
     AbsoluteCameraPosition = AbsoluteCameraPosition * concatenatedTransformationMatrix.inv();
 

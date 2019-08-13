@@ -1,5 +1,6 @@
 #include "RANSAC.hpp"
-#define DEBUG_MODE
+//#define DEBUG_MODE
+#define DISABLE_BREAK
 ourRANSAC::ourRANSAC(int k, int N, int treshold, Sequence *seq)
 {
     this->seq = seq;
@@ -11,8 +12,8 @@ void ourRANSAC::setImages(cv::Mat a, cv::Mat b)
     cv::cvtColor(a,temp_a,cv::COLOR_GRAY2BGR);
     cv::cvtColor(b,temp_b,cv::COLOR_GRAY2BGR);
 
-    this->image0 = temp_a.clone();
-    this->image2 = temp_a.clone();
+    this->image0 = temp_b.clone();
+    this->image2 = temp_b.clone();
 
 }
 void ourRANSAC::setRANSACParams(int k, int N, int treshold)
@@ -76,7 +77,7 @@ void ourRANSAC::calculateExtrinsics()
         TriangulatedPointsSubsetNew = cv::Mat();
 
         printf("sizes before solvePNP: %d , %d\n", TriangulatedPointsSubset.rows, KeypointsSubset.size());
-        cv::solvePnP(TriangulatedPointsSubset,KeypointsSubset,this->camMatrix,this->DistortionCoefs,this->rotationVector,this->translationVector);
+        cv::solvePnPRefineVVS(TriangulatedPointsSubset,KeypointsSubset,this->camMatrix,this->DistortionCoefs,this->rotationVector,this->translationVector);
 
         //3. do The Rodrigues on Rotation vector
 
@@ -144,31 +145,31 @@ void ourRANSAC::calculateExtrinsics()
             double distance = (pow(projectedPoint.x - KeyPointsAll[i].x,2)) + (pow(projectedPoint.y - KeyPointsAll[i].y,2));
             #ifdef DEBUG_MODE               
                 std::cout << "distance = " << sqrt(distance) << std::endl;
+                std::cout << "size of vector: " << KeypointsSubsetNew.size() << std::endl;
             #endif
-            std::cout << "size of vector: " << KeypointsSubsetNew.size() << std::endl;
             if(distance < this->treshold * this->treshold - 2*num)
             {
                 goodPoints++;
                 TriangulatedPointsSubsetNew.push_back(TriangulatedPointsAll.at<cv::Point3d>(i));
                 KeypointsSubsetNew.push_back(KeyPointsAll[i]);
-                //#ifdef DEBUG_MODE
+                #ifdef DEBUG_MODE
                     cv::circle(visualisationMatrix0, cv::Point(projectedPoint.x,projectedPoint.y), 1, cv::Scalar(0,0,255), 3);
                     cv::circle(visualisationMatrix2, KeyPointsAll[i], 1, cv::Scalar(255,0,0), 3);
-                //#endif
+                #endif
             }
             //printf("pp = %f %f \n", projectedPoint.x , projectedPoint.y);
             //printf("gt = %f %f \n", KeyPointsForEval[i].x, KeyPointsForEval[i].y);
         }
-        //#ifdef DEBUG_MODE
+        #ifdef DEBUG_MODE
             cv::imshow("image2",visualisationMatrix0);
             cv::imshow("image0",visualisationMatrix2);
             cv::waitKey(0);
             std::cout << "good points: " << goodPoints << std::endl;
-        //#endif
-
-        if(KeypointsSubsetNew.size() == KeypointsSubset.size())
-            break;
-
+        #endif
+        #ifndef DISABLE_BREAK
+            if(KeypointsSubsetNew.size() == KeypointsSubset.size())
+                break;
+        #endif
         TriangulatedPointsSubset = TriangulatedPointsSubsetNew.clone();
         KeypointsSubset = KeypointsSubsetNew;
     }
