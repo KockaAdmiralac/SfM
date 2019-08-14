@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/../libplyxx/libplyxx",
-                "/usr/include/opencv4"
+                "/usr/include/opencv4",
+                "/usr/include/pcl-1.9"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",

@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import math
 import matplotlib.pyplot as plt
+import pcl
 
 if len(sys.argv) < 2:
     print('Please input sequence number as the first argument.')
@@ -13,6 +14,7 @@ def load_matrix(line):
     array.append([0, 0, 0, 1])
     return np.array(array)
 
+#  Section 1: Determining relative position errors
 with open('TEMP/MATRICES/{:02}.txt'.format(sequence)) as our_poses_file:
     with open('../dataset/poses/{:02}.txt'.format(sequence)) as gt_poses_file:
         our_poses = our_poses_file.readlines()
@@ -51,9 +53,12 @@ print('above one         |', len([x for x in errors if x > 1]))
 print('above two         |', len([x for x in errors if x > 2]))
 print('above three       |', len([x for x in errors if x > 3]))
 plt.plot(errors)
-plt.show()
+plt.savefig('rot-rpe.png')
 
 print('m/frame percent   |', sum(t_errors)/len(t_errors), '%')                
 print('total             |', len(t_errors))
 plt.plot(t_errors)
-plt.show()
+plt.savefig('trans-rpe.png')
+
+# Section 2: Determining point cloud error
+pcl.io

@@ -15,9 +15,13 @@
  * Constants
  */
 // Minimum Hessian constant for SURF.
+#ifndef MIN_HESSIAN
 #define MIN_HESSIAN 400
+#endif
 // Lowe's ratio threshold.
+#ifndef RATIO_THRESH
 #define RATIO_THRESH 0.7f
+#endif
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
 // Uncomment this to activate more debug.
@@ -25,9 +29,23 @@
 // Uncomment this to generate optical flow images.
 //#define GENERATE_OPFLOW
 // Threshold for filtering matches based on keypoints distance.
+#ifndef DISTANCE_THRESH
 #define DISTANCE_THRESH 600
+#endif
 // Current KITTI sequence number.
-#define SEQUENCE 4
+#ifndef SEQUENCE_NUMBER
+#define SEQUENCE_NUMBER 4
+#endif
+// RANSAC parameters
+#ifndef RANSAC_1
+#define RANSAC_1 8
+#endif
+#ifndef RANSAC_2
+#define RANSAC_2 100
+#endif
+#ifndef RANSAC_3
+#define RANSAC_3 23
+#endif
 
 /**
  * Initializes the absolute camera matrix,
@@ -104,7 +122,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
     clock_t startTime = clock();
 
     // 1. FEATURE DETECTION
-    cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(MIN_HESSIAN);
+    cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create(MIN_HESSIAN);
     std::vector<cv::KeyPoint> keypoints0, keypoints1, keypoints2, keypoints3;
     cv::Mat descriptors0, descriptors1, descriptors2, descriptors3;
 
@@ -244,7 +262,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
         // Turning rotation vector into rotation matrix.
         Rodrigues(rotationVector, rotationMatrix);
     #else
-        ourRANSAC ransac(8,100,23,&seq);
+        ourRANSAC ransac(RANSAC_1, RANSAC_2, RANSAC_3, &seq);
         #ifdef DEBUG_MODE
             ransac.setImages(image0,image2);
         #endif
@@ -361,7 +379,7 @@ void printPerformance(Sequence &seq, std::vector<double> &performance)
 
 int main()
 {
-    Sequence seq(SEQUENCE);
+    Sequence seq(SEQUENCE_NUMBER);
     cv::Mat AbsoluteCameraPosition = initializeCameraMatrix(seq);
 
     // Iterating through frames.
