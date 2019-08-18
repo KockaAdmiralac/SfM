@@ -20,7 +20,6 @@ void ourRANSAC::setImages(cv::Mat a, cv::Mat b)
         this->image2 = temp_b.clone();
 }
 #endif
-
 void ourRANSAC::setRANSACParams(int k, int N, int threshold)
 {
     this->k = k;
@@ -42,6 +41,7 @@ void ourRANSAC::setRANSACArguments(cv::Mat trp, std::vector<cv::Point2d> skp, st
 
 void ourRANSAC::calculateExtrinsics()
 {
+    this->extrinsics.create(4,4,CV_64F);
     // 1. Randomize subsets
     std::vector<int> randomArray;
 
@@ -61,7 +61,6 @@ void ourRANSAC::calculateExtrinsics()
 
     // 2. SolvePnP with randomized subsets
     cv::Mat rotationMatrix;
-    cv::Mat extrinsics(4, 4, CV_64F);
     cv::Mat TriangulatedPointsSubsetNew;
     std::vector<cv::Point2d> KeypointsSubsetNew;
     for (int num = 0; num < k; num++)
@@ -82,8 +81,29 @@ void ourRANSAC::calculateExtrinsics()
         #endif
 
         std::cout << "trpSubsize, kpsubsize = " << TriangulatedPointsSubset.rows << " " << KeypointsSubset.size() << std::endl;
-        cv::solvePnP(TriangulatedPointsSubset,KeypointsSubset, this->camMatrix, this->DistortionCoefs, this->rotationVector,this->translationVector);
-
+        while(1){ //stupidest way to continue after handling the exception
+            try
+            {
+                cv::solvePnP(TriangulatedPointsSubset,KeypointsSubset, this->camMatrix, this->DistortionCoefs, this->rotationVector,this->translationVector,true);
+            }
+            catch(cv::Exception& e)
+            {
+                std::cout <<"exception!!!!!!!!!!!!!!!!!!!" << std::endl;
+                std::cout << "##########################\n";
+                for(int i=0;i<3;i++)
+                {
+                    printf("| ");
+                    for(int j=0;j<4;j++)
+                    {
+                        printf("%.2f, ",this->extrinsics.at<double>(i,j));
+                    }
+                    printf("|\n");
+                }
+                std::cout << "#########################\n";
+                std::getchar();
+            }
+            break;
+        }
         // 3. Do Rodrigues on the rotation vector
         cv::Rodrigues(rotationVector,rotationMatrix);
 
@@ -93,12 +113,13 @@ void ourRANSAC::calculateExtrinsics()
         {
             for (int j = 0; j < 3; ++j)
             {
-                extrinsics.at<double>(i, j) = rotationMatrix.at<double>(i, j);
+                this->extrinsics.at<double>(i, j) = rotationMatrix.at<double>(i, j);
             }
-            extrinsics.at<double>(i,3) = translationVector.at<double>(i, 0);
-            extrinsics.at<double>(3,i) = 0;
+            this->extrinsics.at<double>(i,3) = translationVector.at<double>(i, 0)/2;
+            this->extrinsics.at<double>(3,i) = 0;
         }
-        extrinsics.at<double>(3,3) = 1;
+        this->extrinsics.at<double>(2,3) = translationVector.at<double>(2,0);
+        this->extrinsics.at<double>(3,3) = 1;
 
         cv::Mat tempCamMat(4,4,CV_64F);
         for(int i = 0;i<3;i++)
@@ -115,7 +136,7 @@ void ourRANSAC::calculateExtrinsics()
         // 5. Calculate projection for all points
         int goodPoints = 0;
         for (int i = 0; i < TriangulatedPointsAll.cols; i++)
-        {
+        {  
             cv::Mat tempMat(4,1,CV_64F);
             cv::Point3d tempPoint = TriangulatedPointsAll.at<cv::Point3d>(i);
             cv::Mat tempResultMat;
@@ -124,11 +145,14 @@ void ourRANSAC::calculateExtrinsics()
             tempMat.at<double>(2,0) = tempPoint.z;
             tempMat.at<double>(3,0) = 1;
 
-            tempResultMat = tempCamMat * extrinsics.inv() * tempMat;
-            std::cout << "temp result mat: \n" << tempResultMat << std::endl;
+            tempResultMat = tempCamMat * this->extrinsics * tempMat;
+        
             cv::Point2d projectedPoint;
             projectedPoint.x = tempResultMat.at<double>(0,0) / tempResultMat.at<double>(2,0);
             projectedPoint.y = tempResultMat.at<double>(1,0) / tempResultMat.at<double>(2,0);
+            #ifdef DEBUG_MODE
+                printf("%f, %f \n",projectedPoint.x, projectedPoint.y);
+            #endif
             double distance = (pow(projectedPoint.x - KeyPointsAll[i].x,2)) + (pow(projectedPoint.y - KeyPointsAll[i].y,2));
             #ifdef DEBUG_MODE
                 std::cout << "distance = " << sqrt(distance) <<  " | " << realTreshold <<  std::endl;
@@ -136,7 +160,6 @@ void ourRANSAC::calculateExtrinsics()
             #endif
             if (distance < threshold*threshold)
             {
-                //std::cout <<"#" << std::endl;
                 goodPoints++;
                 TriangulatedPointsSubsetNew.push_back(TriangulatedPointsAll.at<cv::Point3d>(i));
                 KeypointsSubsetNew.push_back(KeyPointsAll[i]);
@@ -164,6 +187,7 @@ void ourRANSAC::calculateExtrinsics()
 
     this->finalRotationMatrix = rotationMatrix.clone();
     this->finalTranslationVector = translationVector.clone();
+
     //#ifdef DEBUG_MODE
         std::cout << "##########################################\n";
         for(int i=0;i<3;i++)
@@ -171,11 +195,10 @@ void ourRANSAC::calculateExtrinsics()
             printf("| ");
             for(int j=0;j<4;j++)
             {
-                printf("%.2f, ",extrinsics.at<double>(i,j));
+                printf("%.2f, ",this->extrinsics.at<double>(i,j));
             }
             printf("|\n");
         }
-
         std::cout << "##########################################\n";
     //#endif
 }
