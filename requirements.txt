@@ -4,3 +4,4 @@ numpy
 opencv-python
 plyfile
 pykitti
+python-pcl

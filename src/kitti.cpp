@@ -57,15 +57,10 @@ Sequence::Sequence(int number) : number(number) {
         std::filesystem::directory_iterator(imagesPath),
         std::filesystem::directory_iterator{}
     );
-    std::cout << fileNumber << std::endl;
 }
 
 cv::Mat Sequence::image(int image, int sequence) {
     char imageFilename[PATH_MAX];
     sprintf(imageFilename, "../dataset/sequences/%02d/image_%d/%06d.png", number, image, sequence);
-    //if(image == 0)
-        //sprintf(imageFilename, "../img2.png");
-    //else
-        //sprintf(imageFilename, "../image.png");
     return cv::imread(imageFilename, cv::IMREAD_GRAYSCALE);
 }

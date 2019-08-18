@@ -1,7 +1,7 @@
 #include <ransac.hpp>
 
 //#define DEBUG_MODE
-//#define DISABLE_BREAK
+#define DISABLE_BREAK
 
 ourRANSAC::ourRANSAC(int k, int N, int threshold, Sequence *seq)
 {
@@ -107,7 +107,6 @@ void ourRANSAC::calculateExtrinsics()
         // 3. Do Rodrigues on the rotation vector
         cv::Rodrigues(rotationVector,rotationMatrix);
 
-
         // 4. Concatenate matrices
         for (int i = 0; i < 3; ++i)
         {
@@ -131,9 +130,9 @@ void ourRANSAC::calculateExtrinsics()
             tempCamMat.at<double>(3,i) = 0;
             tempCamMat.at<double>(i,3) = 0;
         }
-        tempCamMat.at<double>(3,3) = 1;
 
         // 5. Calculate projection for all points
+        cv::Mat projForEval( 1,TriangulatedPointsAll.cols , CV_64FC3);
         int goodPoints = 0;
         for (int i = 0; i < TriangulatedPointsAll.cols; i++)
         {  
@@ -144,6 +143,18 @@ void ourRANSAC::calculateExtrinsics()
             tempMat.at<double>(1,0) = tempPoint.y;
             tempMat.at<double>(2,0) = tempPoint.z;
             tempMat.at<double>(3,0) = 1;
+            cv::Mat projMatrix(4,4,CV_64F);
+            for(int i =0;i<3;i++)
+            {
+                for(int j=0;j<4;j++)
+                {
+                    projMatrix.at<double>(i,j) = seq->calib[0].at<double>(i,j);
+                }
+            }
+            projMatrix.at<double>(3,0) = 0;
+            projMatrix.at<double>(3,1) = 0;
+            projMatrix.at<double>(3,2) = 0;
+            projMatrix.at<double>(3,3) = 1;
 
             tempResultMat = tempCamMat * this->extrinsics * tempMat;
         
@@ -155,10 +166,10 @@ void ourRANSAC::calculateExtrinsics()
             #endif
             double distance = (pow(projectedPoint.x - KeyPointsAll[i].x,2)) + (pow(projectedPoint.y - KeyPointsAll[i].y,2));
             #ifdef DEBUG_MODE
-                std::cout << "distance = " << sqrt(distance) <<  " | " << realTreshold <<  std::endl;
+                std::cout << "distance = " << sqrt(distance) << std::endl;
                 std::cout << "size of vector: " << KeypointsSubsetNew.size() << std::endl;
             #endif
-            if (distance < threshold*threshold)
+            if (distance < this->threshold * this->threshold - 2*num)
             {
                 goodPoints++;
                 TriangulatedPointsSubsetNew.push_back(TriangulatedPointsAll.at<cv::Point3d>(i));

@@ -3,6 +3,7 @@ cmake_install.cmake
 CMakeFiles
 Makefile
 SfM
+ICP
 CMakeCache.txt
 liblibplyxx.a
 *.JPG

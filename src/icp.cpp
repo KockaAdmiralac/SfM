@@ -1,23 +1,40 @@
-#include <icp.hpp>
+#include <iostream>
+#include <fstream>
 
-int icp(VertexList ourCloud, VertexList theirCloud)
+#include <pcl/io/ply_io.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/icp.h>
+
+#ifndef SEQUENCE_NUMBER
+#define SEQUENCE_NUMBER 1
+#endif
+
+int main (int argc, char** argv)
 {
-    int result = 0;
-    for (Vertex v : ourCloud)
+    if (SEQUENCE_NUMBER != 0)
     {
-        int minDist = INT32_MAX;
-        for (Vertex v2 : theirCloud)
-        {
-            int xDist = v.x - v2.x,
-                yDist = v.y - v2.y,
-                zDist = v.z - v2.z,
-                dist = xDist * xDist + yDist * yDist + zDist * zDist;
-            if (dist < minDist)
-            {
-                minDist = dist;
-            }
-        }
-        result += minDist;
+        return 0;
     }
-    return result;
+    pcl::PLYReader plyReader;
+    for (int i = 0; i < 4540; ++i)
+    {
+        char ourCloudFilename[PATH_MAX];
+        char velodyneCloudFilename[PATH_MAX];
+        sprintf(ourCloudFilename, "TEMP/TRIANGULATION/00/%02d.ply", i);
+        sprintf(velodyneCloudFilename, "TEMP/VELODYNE/%04d.ply", i);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr ourCloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr velodyneCloud(new pcl::PointCloud<pcl::PointXYZ>);
+        plyReader.read(ourCloudFilename, *ourCloud);
+        plyReader.read(velodyneCloudFilename, *velodyneCloud);
+
+        // Execute ICP.
+        pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+        icp.setInputSource(velodyneCloud);
+        icp.setInputTarget(ourCloud);
+        pcl::PointCloud<pcl::PointXYZ> finalCloud;
+        icp.align(finalCloud);
+
+        printf("%f\n", icp.getFitnessScore());
+    }
+    return 0;
 }
