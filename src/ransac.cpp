@@ -78,9 +78,9 @@ void ourRANSAC::calculateExtrinsics()
 
         #ifdef DEBUG_MODE
             printf("sizes before solvePNP: %d , %d\n", TriangulatedPointsSubset.rows, KeypointsSubset.size());
+            std::cout << "trpSubsize, kpsubsize = " << TriangulatedPointsSubset.rows << " " << KeypointsSubset.size() << std::endl;
         #endif
 
-        std::cout << "trpSubsize, kpsubsize = " << TriangulatedPointsSubset.rows << " " << KeypointsSubset.size() << std::endl;
         while(1){ //stupidest way to continue after handling the exception
             try
             {
@@ -200,7 +200,7 @@ void ourRANSAC::calculateExtrinsics()
     this->finalRotationMatrix = rotationMatrix.clone();
     this->finalTranslationVector = translationVector.clone();
 
-    //#ifdef DEBUG_MODE
+    #ifdef DEBUG_MODE
         std::cout << "##########################################\n";
         for(int i=0;i<3;i++)
         {
@@ -212,7 +212,7 @@ void ourRANSAC::calculateExtrinsics()
             printf("|\n");
         }
         std::cout << "##########################################\n";
-    //#endif
+    #endif
 }
 
 void ourRANSAC::returnValues(cv::Mat &rotationContainer, cv::Mat &translationContainer)

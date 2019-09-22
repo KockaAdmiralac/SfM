@@ -44,7 +44,7 @@ set(SOURCES
     src/main.cpp
 )
 
-set(SEQUENCE 0 CACHE STRING "KITTI sequence to process")
+set(SEQUENCE 4 CACHE STRING "KITTI sequence to process")
 set(DISTANCE_THRESH 600 CACHE STRING "Threshold for filtering matches based on keypoints distance")
 set(MIN_HESSIAN 400 CACHE STRING "Minimum Hessian constant")
 set(RATIO_THRESH 0.7f CACHE STRING "Lowe's ratio threshold")

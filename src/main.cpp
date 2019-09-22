@@ -355,7 +355,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
 
 void printPerformance(Sequence &seq, std::vector<double> &performance)
 {
-    double total, max = 0, min = INT64_MAX, avg;
+    double total = 0, max = 0, min = INT64_MAX, avg;
     char performanceFilePath[PATH_MAX];
     char metricsFilePath[PATH_MAX];
     sprintf(performanceFilePath, "TEMP/PERFORMANCE/%02d.txt", seq.number);
