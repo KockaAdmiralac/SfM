@@ -16,11 +16,11 @@
  */
 // Minimum Hessian constant for SURF.
 #ifndef MIN_HESSIAN
-#define MIN_HESSIAN 400
+    #define MIN_HESSIAN 400
 #endif
 // Lowe's ratio threshold.
 #ifndef RATIO_THRESH
-#define RATIO_THRESH 0.7f
+    #define RATIO_THRESH 0.8f
 #endif
 // Size of the hash array where matches are stored.
 #define MAX_MATCHES 10000
@@ -30,21 +30,27 @@
 //#define GENERATE_OPFLOW
 // Threshold for filtering matches based on keypoints distance.
 #ifndef DISTANCE_THRESH
-#define DISTANCE_THRESH 600
+    #define DISTANCE_THRESH 600
 #endif
 // Current KITTI sequence number.
 #ifndef SEQUENCE_NUMBER
-#define SEQUENCE_NUMBER 4
+    #define SEQUENCE_NUMBER 4
 #endif
 // RANSAC parameters
 #ifndef RANSAC_1
-#define RANSAC_1 8
+    #define RANSAC_1 8
 #endif
 #ifndef RANSAC_2
-#define RANSAC_2 100
+    #define RANSAC_2 100
 #endif
 #ifndef RANSAC_3
-#define RANSAC_3 23
+    #define RANSAC_3 23
+#endif
+#ifndef DETECTOR
+    #define DETECTOR xfeatures2d::SIFT
+#endif
+#ifndef MATCHING
+    #define MATCHING FLANNBASED
 #endif
 
 /**
@@ -122,7 +128,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
     clock_t startTime = clock();
 
     // 1. FEATURE DETECTION
-    cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create(MIN_HESSIAN);
+    cv::Ptr<cv::DETECTOR> detector = cv::DETECTOR::create(MIN_HESSIAN);
     std::vector<cv::KeyPoint> keypoints0, keypoints1, keypoints2, keypoints3;
     cv::Mat descriptors0, descriptors1, descriptors2, descriptors3;
 
@@ -132,7 +138,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
     detector->detectAndCompute(image3, cv::noArray(), keypoints3, descriptors3);
 
     // 2. FEATURE MATCHING using cv::FLANNBASED matcher
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::MATCHING);
     std::vector<cv::DMatch> matchesUp = extractMatches(matcher, descriptors0, descriptors1);
     std::vector<cv::DMatch> matchesDown = extractMatches(matcher, descriptors2, descriptors3);
     std::vector<cv::DMatch> matchesLeft = extractMatches(matcher, descriptors0, descriptors2);
@@ -350,8 +356,11 @@ void printPerformance(Sequence &seq, std::vector<double> &performance)
 {
     double total, max = 0, min = INT64_MAX, avg;
     char performanceFilePath[PATH_MAX];
+    char metricsFilePath[PATH_MAX];
     sprintf(performanceFilePath, "TEMP/PERFORMANCE/%02d.txt", seq.number);
+    sprintf(metricsFilePath, "TEMP/METRICS/%02d.txt", seq.number);
     std::ofstream performanceFile(performanceFilePath);
+    std::ofstream metricsFile(metricsFilePath);
 
     for (double measurement : performance)
     {
@@ -375,6 +384,8 @@ void printPerformance(Sequence &seq, std::vector<double> &performance)
     printf("# Min:   %.5f s                                         #\n", min);
     printf("# Avg:   %.5f s                                         #\n", avg);
     printf("#----------------------------------------------------------#\n");
+    metricsFile << "Total: " << total << " s\nMax: " << max << " s\nMin: " << min << " s\nAvg: " << avg << " s\n";
+    metricsFile.close();
 }
 
 int main()
