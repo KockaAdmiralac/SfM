@@ -16,7 +16,7 @@
  */
 // Minimum Hessian constant for SURF.
 #ifndef MIN_HESSIAN
-#define MIN_HESSIAN 400
+#define MIN_HESSIAN 1000
 #endif
 // Lowe's ratio threshold.
 #ifndef RATIO_THRESH
@@ -308,6 +308,7 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
     clock_t endTime = clock();
 
     // 8. WRITING RESULTS
+    
     char matrixFilePath[PATH_MAX];
     char triangulationFilePath[PATH_MAX];
     double elapsedTime = double(endTime - startTime) / CLOCKS_PER_SEC;

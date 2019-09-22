@@ -101,6 +101,7 @@ void ourRANSAC::calculateExtrinsics()
                 }
                 std::cout << "#########################\n";
                 std::getchar();
+                cv::solvePnPRansac(TriangulatedPointsSubset,KeypointsSubset, this->camMatrix, this->DistortionCoefs, this->rotationVector,this->translationVector,false);
             }
             break;
         }
@@ -219,5 +220,5 @@ void ourRANSAC::returnValues(cv::Mat &rotationContainer, cv::Mat &translationCon
     rotationContainer = finalRotationMatrix;
     translationContainer = finalTranslationVector;
 }
-
+    
 
