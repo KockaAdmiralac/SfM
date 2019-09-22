@@ -22,6 +22,7 @@ public:
     std::vector<double> DistortionCoefs;
     cv::Mat rotationVector,finalRotationMatrix;
     cv::Mat translationVector,finalTranslationVector;
+    cv::Mat extrinsics;
     #ifdef DEBUG_MODE
     cv::Mat image0, image2;
     #endif
