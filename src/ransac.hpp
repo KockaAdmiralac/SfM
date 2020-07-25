@@ -35,7 +35,7 @@ public:
     void setRANSACArguments(cv::Mat trp, std::vector<cv::Point2d> skp,std::vector<cv::Point2d> skp0, cv::Mat camMatrix,
                             std::vector<double> DistortionCoefs, cv::Mat rotationVector, cv::Mat translationVector);
     
-    void calculateExtrinsics();
+    bool calculateExtrinsics();
     #ifdef DEBUG_MODE
     void setImages(cv::Mat a, cv::Mat b);
     #endif

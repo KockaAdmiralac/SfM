@@ -281,7 +281,11 @@ double frame(cv::Mat image0, cv::Mat image1, cv::Mat image2, cv::Mat image3, Seq
             rotationVector,
             translationVector
         );
-        ransac.calculateExtrinsics();
+        if (!ransac.calculateExtrinsics())
+        {
+            printf("Failed.");
+            return 0;
+        }
         ransac.returnValues(rotationMatrix,translationVector);
 
         #ifdef DEBUG_MODE

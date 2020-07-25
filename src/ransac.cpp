@@ -39,7 +39,7 @@ void ourRANSAC::setRANSACArguments(cv::Mat trp, std::vector<cv::Point2d> skp, st
     this->translationVector = translationVector;
 }
 
-void ourRANSAC::calculateExtrinsics()
+bool ourRANSAC::calculateExtrinsics()
 {
     this->extrinsics.create(4,4,CV_64F);
     // 1. Randomize subsets
@@ -88,20 +88,29 @@ void ourRANSAC::calculateExtrinsics()
             }
             catch(cv::Exception& e)
             {
-                std::cout <<"exception!!!!!!!!!!!!!!!!!!!" << std::endl;
-                std::cout << "##########################\n";
-                for(int i=0;i<3;i++)
-                {
-                    printf("| ");
-                    for(int j=0;j<4;j++)
+                #ifdef DEBUG_MODE
+                    std::cout <<"exception!!!!!!!!!!!!!!!!!!!" << std::endl;
+                    std::cout << "##########################\n";
+                    for(int i=0;i<3;i++)
                     {
-                        printf("%.2f, ",this->extrinsics.at<double>(i,j));
+                        printf("| ");
+                        for(int j=0;j<4;j++)
+                        {
+                            printf("%.2f, ",this->extrinsics.at<double>(i,j));
+                        }
+                        printf("|\n");
                     }
-                    printf("|\n");
+                    std::cout << "#########################\n";
+                    std::getchar();
+                #endif
+                try
+                {
+                    cv::solvePnPRansac(TriangulatedPointsSubset,KeypointsSubset, this->camMatrix, this->DistortionCoefs, this->rotationVector,this->translationVector,false);
                 }
-                std::cout << "#########################\n";
-                std::getchar();
-                cv::solvePnPRansac(TriangulatedPointsSubset,KeypointsSubset, this->camMatrix, this->DistortionCoefs, this->rotationVector,this->translationVector,false);
+                catch (cv::Exception& e)
+                {
+                    return false;
+                }
             }
             break;
         }
@@ -213,6 +222,7 @@ void ourRANSAC::calculateExtrinsics()
         }
         std::cout << "##########################################\n";
     #endif
+    return true;
 }
 
 void ourRANSAC::returnValues(cv::Mat &rotationContainer, cv::Mat &translationContainer)

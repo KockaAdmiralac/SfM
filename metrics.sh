@@ -27,5 +27,6 @@ cp "TEMP/METRICS/$SEQUENCE_FORMAT.txt" "$FOLDER/metrics.txt"
 python3 merge.py $SEQUENCE
 mv merge.ply "$FOLDER/cloud.ply"
 python3 metrics.py $SEQUENCE >> "$FOLDER/metrics.txt"
-mv rot-rpe.png $FOLDER
-mv trans-rpe.png $FOLDER
+mv rot-rpe.svg $FOLDER
+mv trans-rpe.svg $FOLDER
+cp -r "TEMP/TRIANGULATION/$SEQUENCE_FORMAT" "$FOLDER/clouds"
