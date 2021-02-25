@@ -5,4 +5,3 @@ open3d
 opencv-python
 plyfile
 pykitti
-python-pcl
